@@ -71,6 +71,29 @@ async function synchroniserAttributions(tacheId, nouveaux, anciens = []) {
 }
 
 /**
+ * Bouton « Prévenir par email » (DG / admin) : renvoie l'email à tous les attributaires
+ * de la tâche, sauf soi-même. Retourne { envoyes, resultats }.
+ */
+export async function renvoyerNotification(tacheId, profilIds) {
+  const { data, error } = await supabase.functions.invoke('notifier-attribution', {
+    body: { tache_id: tacheId, profil_ids: profilIds, renvoi: true }
+  })
+  if (error) {
+    let message = error.message
+    try {
+      const corps = await error.context?.json?.()
+      if (corps?.erreur) message = corps.erreur
+    } catch { /* réponse non JSON */ }
+    if (error.context?.status === 404 || /Failed to send a request|not found/i.test(message)) {
+      message = "La fonction « notifier-attribution » n'est pas encore déployée sur Supabase."
+    }
+    throw new Error(message)
+  }
+  if (data?.erreur) throw new Error(data.erreur)
+  return data
+}
+
+/**
  * Prévient par email les personnes nouvellement attribuées (fonction Edge « notifier-attribution »).
  * N'envoie rien si l'auteur n'est ni DG ni administrateur (contrôle côté serveur).
  * Sans attente : l'écran n'est jamais bloqué, un échec d'envoi n'empêche pas l'attribution.

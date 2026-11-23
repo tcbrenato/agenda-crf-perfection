@@ -6,6 +6,8 @@
 //
 //  Appel (depuis l'application, avec la session de l'utilisateur) :
 //    { tache_id: "<uuid>", profil_ids: ["<uuid>", ...] }
+//    { tache_id: "<uuid>", profil_ids: [...], renvoi: true }   ← bouton « Prévenir par email »
+//      (renvoi : tous les attributaires indiqués, sans condition de délai)
 //
 //  Contrôles :
 //    - l'appelant doit être DG ou administrateur actif (sinon : rien n'est envoyé)
@@ -149,7 +151,7 @@ Deno.serve(async (req) => {
     return reponseJson({ ok: true, envoyes: 0, raison: 'non_gestionnaire' })
   }
 
-  let corps: { tache_id?: string; profil_ids?: string[] }
+  let corps: { tache_id?: string; profil_ids?: string[]; renvoi?: boolean }
   try {
     corps = await req.json()
   } catch {
@@ -173,9 +175,11 @@ Deno.serve(async (req) => {
     .eq('tache_id', tacheId)
   const toutes = attributions ?? []
   const limite = Date.now() - DELAI_MAX_MS
-  const valides = toutes.filter(
-    (a) => ids.includes(a.profil_id) && a.attribue_par === appelant.id && new Date(a.attribue_le).getTime() >= limite
-  )
+  const valides = corps.renvoi === true
+    ? toutes.filter((a) => ids.includes(a.profil_id))
+    : toutes.filter(
+        (a) => ids.includes(a.profil_id) && a.attribue_par === appelant.id && new Date(a.attribue_le).getTime() >= limite
+      )
   if (!valides.length) return reponseJson({ ok: true, envoyes: 0, raison: 'aucune_attribution_recente' })
 
   const { data: profils } = await admin

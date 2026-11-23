@@ -10,7 +10,7 @@ import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
 import { useChangementStatut } from '../hooks/useChangementStatut'
 import {
-  ajouterCommentaire, chargerCommentaires, chargerHistorique, chargerTache,
+  ajouterCommentaire, chargerCommentaires, chargerHistorique, chargerTache, renvoyerNotification,
   messageErreur, supprimerCommentaire, supprimerTache
 } from '../lib/api'
 import { formaterDate, formaterHorodatage } from '../lib/dates'
@@ -52,6 +52,7 @@ export default function FicheTache() {
   const [texte, setTexte] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [confirmerSuppression, setConfirmerSuppression] = useState(false)
+  const [envoiEmail, setEnvoiEmail] = useState(false)
 
   // Tâche absente de la liste en mémoire (ex. lien direct) : chargement à la demande
   useEffect(() => {
@@ -108,6 +109,24 @@ export default function FicheTache() {
       setCommentaires((l) => l.filter((x) => x.id !== c.id))
     } catch (err) {
       toast.erreur(messageErreur(err))
+    }
+  }
+
+  // Destinataires du bouton « Prévenir par email » : attributaires actifs, sauf soi-même
+  const destinatairesEmail = tache.attribues.filter((id) => id !== profil.id && profilsParId[id]?.actif)
+
+  const prevenirParEmail = async () => {
+    setEnvoiEmail(true)
+    try {
+      const r = await renvoyerNotification(tache.id, destinatairesEmail)
+      const echecs = (r.resultats || []).filter((x) => !x.ok)
+      if (echecs.length) toast.erreur(`Envoi impossible à ${echecs.map((x) => x.email).join(', ')} : ${echecs[0].erreur}`)
+      else if (r.envoyes) toast.info(`Email envoyé à ${r.envoyes} personne${r.envoyes > 1 ? 's' : ''}`)
+      else toast.info("Aucun email envoyé.")
+    } catch (err) {
+      toast.erreur(messageErreur(err))
+    } finally {
+      setEnvoiEmail(false)
     }
   }
 
@@ -186,6 +205,17 @@ export default function FicheTache() {
               )
             })}
           </div>
+
+          {estGestionnaire(profil) && destinatairesEmail.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <button type="button" className="btn btn--secondaire btn--bloc" disabled={envoiEmail} onClick={prevenirParEmail}>
+                <IconeEnvoyer /> {envoiEmail ? 'Envoi…' : 'Prévenir par email'}
+              </button>
+              <p className="texte-doux texte-tres-petit" style={{ marginTop: 4, textAlign: 'center' }}>
+                Destinataires : {destinatairesEmail.map((id) => profilsParId[id]?.nom_complet).join(', ')}
+              </p>
+            </div>
+          )}
 
           {(peutModifier(profil, tache) || peutSupprimer(profil)) && (
             <div className="ligne" style={{ marginTop: 16, gap: 10 }}>

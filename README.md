@@ -312,7 +312,8 @@ Quand le **DG** ou un **administrateur** attribue une tâche à quelqu'un, à la
    | `SMTP_USER` | `contact@crfperfection.pro` |
    | `SMTP_PASS` | mot de passe de la boîte mail |
    | `APP_URL` | `https://agenda-crf-perfection.vercel.app` |
-3. Testez : depuis le compte du DG, créez une tâche attribuée à un membre. En cas de problème, consultez **Edge Functions**, puis `notifier-attribution`, puis **Logs**.
+3. Testez : depuis le compte du DG, créez une tâche attribuée à un membre.
+4. Pour une tâche déjà existante, le bouton **Prévenir par email** de la fiche (DG et administrateur) renvoie l'email à tous ses attributaires. En cas de problème, consultez **Edge Functions**, puis `notifier-attribution`, puis **Logs**.
 
 ---
 
