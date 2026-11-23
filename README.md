@@ -344,7 +344,7 @@ Ces règles ont été vérifiées sur PostgreSQL 16 avec des scénarios DG, admi
 |---|---|
 | Écran « Configuration requise » | `.env` absent ou incomplet. Relancez `npm run dev` après l'avoir modifié (sur Vercel : variables d'environnement puis Redeploy). |
 | « Email ou mot de passe incorrect » pour le premier DG | Vérifiez que **Auto Confirm User** était coché, ou confirmez l'utilisateur dans Authentication > Users. |
-| Le DG ne voit pas « Gestion des membres » | Le rôle n'a pas été passé à `dg` : refaites l'étape 6.2. |
+| Le DG ne voit pas « Ouvrir l'administration » | Le rôle n'a pas été passé à `dg` : refaites l'étape 6.2. |
 | « La fonction admin-membres n'est pas déployée » | Déployez la fonction (§3.7) avec exactement ce nom. |
 | L'invitation n'arrive pas | Vérifiez les spams et la limite d'envoi du SMTP intégré (§3.6). Vérifiez aussi les Redirect URLs. |
 | Le lien de l'email ouvre une page d'erreur | Ajoutez l'adresse de l'application dans les **Redirect URLs** (§3.4). Les liens expirent après 24 h : utilisez « Renvoyer le lien ». |
