@@ -397,6 +397,14 @@ grant select, insert, update, delete on public.commentaires to authenticated;
 grant select on public.historique to authenticated;
 grant usage, select on sequence public.taches_numero_seq to authenticated;
 
+-- Rôle serveur (fonctions Edge) : les projets Supabase récents ne lui donnent plus
+-- de droits automatiquement sur les nouvelles tables.
+grant usage on schema public to service_role;
+grant all on public.profils, public.taches, public.attributions,
+             public.commentaires, public.historique to service_role;
+grant all on sequence public.taches_numero_seq to service_role;
+grant usage on sequence public.historique_id_seq to service_role;
+
 grant execute on function public.est_actif(), public.est_gestionnaire(), public.est_dg(),
   public.est_attribue(uuid), public.est_createur(uuid), public.aujourdhui_porto_novo()
   to authenticated;

@@ -99,6 +99,8 @@ as $$
 $$;
 
 revoke execute on function public.rappels_a_envoyer() from public, anon, authenticated;
+grant execute on function public.rappels_a_envoyer() to service_role;
+grant all on public.preferences_rappels, public.abonnements_push, public.journal_rappels to service_role;
 
 -- ---------------------------------------------------------------------
 --  ACTIVATION FUTURE (laisser commenté pour l'instant)
