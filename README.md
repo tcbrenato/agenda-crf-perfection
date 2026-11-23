@@ -84,7 +84,8 @@ agenda-crf-perfection/
 │  │  ├─ 0004_admin.sql        État des comptes pour la page Administration
 │  │  └─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
 │  └─ functions/
-│     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (DG/admin)
+│     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
+│     ├─ notifier-attribution/ Email à l'attributaire quand le DG ou l'admin lui confie une tâche
 │     └─ rappels-echeances/    Envoi des rappels (mode simulation tant que non activé)
 └─ src/
    ├─ main.jsx, App.jsx        Démarrage, routes, garde de connexion
@@ -290,6 +291,28 @@ Dans **Administration**, onglet **Données**, puis **Importer un fichier** (admi
 - Attributaires : nom complet ou partiel (« Koffi », « K. Agbodjan »). Pour plusieurs personnes, séparez par `,` `;` `/` ou « et ». **Les membres doivent avoir été invités avant l'import.**
 - Un **aperçu** signale chaque ligne : ✓ prête, ! avertissement (nom inconnu, N° déjà utilisé : numérotation automatique), ✕ ignorée (intitulé vide, échéance illisible).
 - Un modèle CSV peut être téléchargé depuis cet écran.
+
+---
+
+## 11 bis. Email à l'attribution d'une tâche
+
+Quand le **DG** ou un **administrateur** attribue une tâche à quelqu'un, à la création ou en ajoutant un attributaire, la personne reçoit un email de `contact@crfperfection.pro`. L'email contient le N°, l'intitulé, l'échéance, la priorité, la description, qui l'a confiée, les co-attributaires et un bouton « Voir la tâche ».
+
+- Pas d'email à soi-même, ni aux comptes désactivés, ni lors d'un import de liste.
+- Un membre qui attribue sa propre tâche ne déclenche pas d'email.
+- La fonction vérifie que l'attribution vient d'être faite par l'appelant (moins de 15 minutes), ce qui empêche les envois abusifs.
+
+**Mise en place :**
+1. **Edge Functions**, puis **Deploy a new function**, puis **Via Editor**. Nommez-la exactement `notifier-attribution`, collez `supabase/functions/notifier-attribution/index.ts`, puis **Deploy**.
+2. **Edge Functions**, puis **Secrets** : ajoutez
+   | Nom | Valeur |
+   |---|---|
+   | `SMTP_HOST` | `smtp.hostinger.com` |
+   | `SMTP_PORT` | `465` |
+   | `SMTP_USER` | `contact@crfperfection.pro` |
+   | `SMTP_PASS` | mot de passe de la boîte mail |
+   | `APP_URL` | `https://agenda-crf-perfection.vercel.app` |
+3. Testez : depuis le compte du DG, créez une tâche attribuée à un membre. En cas de problème, consultez **Edge Functions**, puis `notifier-attribution`, puis **Logs**.
 
 ---
 

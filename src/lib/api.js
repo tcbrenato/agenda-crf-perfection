@@ -66,7 +66,20 @@ async function synchroniserAttributions(tacheId, nouveaux, anciens = []) {
   }
   if (aAjouter.length) {
     verifier(await supabase.from('attributions').insert(aAjouter.map((profil_id) => ({ tache_id: tacheId, profil_id }))))
+    notifierAttribution(tacheId, aAjouter)
   }
+}
+
+/**
+ * Prévient par email les personnes nouvellement attribuées (fonction Edge « notifier-attribution »).
+ * N'envoie rien si l'auteur n'est ni DG ni administrateur (contrôle côté serveur).
+ * Sans attente : l'écran n'est jamais bloqué, un échec d'envoi n'empêche pas l'attribution.
+ */
+export function notifierAttribution(tacheId, profilIds) {
+  supabase.functions
+    .invoke('notifier-attribution', { body: { tache_id: tacheId, profil_ids: profilIds } })
+    .then(({ error }) => error && console.warn('Notification email non envoyée :', error.message))
+    .catch((e) => console.warn('Notification email non envoyée :', e))
 }
 
 export async function creerTache(champs, attribues = []) {
