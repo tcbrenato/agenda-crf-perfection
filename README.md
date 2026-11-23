@@ -21,7 +21,7 @@ on voit ce qui n'est pas encore échu, ce qui est en cours et ce qui est en reta
 3. [Créer le projet Supabase](#3-créer-le-projet-supabase)
 4. [Variables d'environnement](#4-variables-denvironnement)
 5. [Lancer en local (Windows / PowerShell / VS Code)](#5-lancer-en-local-windows--powershell--vs-code)
-6. [Créer le premier compte DG](#6-créer-le-premier-compte-dg)
+6. [Créer le premier compte administrateur](#6-créer-le-premier-compte-administrateur)
 7. [Déployer sur Vercel](#7-déployer-sur-vercel)
 8. [Inviter les membres](#8-inviter-les-membres)
 9. [Logo et icônes](#9-logo-et-icônes)
