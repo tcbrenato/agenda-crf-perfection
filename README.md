@@ -198,7 +198,7 @@ Autres commandes :
 ```powershell
 npm run build     # compile la version de production dans dist/
 npm run preview   # sert dist/ en local (test du mode PWA / hors ligne)
-npm run icones    # régénère les icônes depuis public/logo.png
+npm run icones    # régénère icônes et logos depuis logos/
 ```
 
 ---
