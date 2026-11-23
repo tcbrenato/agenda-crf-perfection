@@ -110,7 +110,7 @@ h1, h2, h3, p { margin: 0; }
   align-items: center;
   gap: 12px;
 }
-.entete__logo { height: 36px; width: auto; }
+.entete__logo { height: 32px; width: auto; }
 .entete__titre { font-weight: 700; font-size: 1.0625rem; letter-spacing: -0.01em; line-height: 1.15; }
 .entete__titre small { display: block; font-weight: 500; font-size: 0.75rem; color: var(--texte-doux); }
 .entete__nav { display: none; }
@@ -632,9 +632,10 @@ button.statut::after { content: '▾'; font-size: 0.7rem; opacity: 0.7; margin-l
 }
 .page-connexion__haut::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--bordeaux); }
 .page-connexion__logo {
-  width: 132px; height: auto; margin: 0 auto 16px;
-  background: #fff; border-radius: 16px; padding: 10px;
+  width: 100%; max-width: 330px; margin: 0 auto 20px;
+  background: #fff; border-radius: 14px; padding: 14px 18px;
 }
+.page-connexion__logo img { width: 100%; height: auto; }
 .page-connexion__haut h1 { font-size: 1.5rem; font-weight: 750; letter-spacing: -0.02em; }
 .page-connexion__haut p { color: rgba(255,255,255,.75); font-size: 0.9375rem; margin-top: 4px; }
 .page-connexion__form {

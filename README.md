@@ -66,14 +66,15 @@ agenda-crf-perfection/
 ├─ vite.config.js              Vite + PWA (manifest, service worker, cache)
 ├─ vercel.json                 Réécritures SPA + en-têtes de cache
 ├─ .env.example                Modèle des variables d'environnement
+├─ logos/                     Logos officiels sources (non mis en ligne)
 ├─ public/
-│  ├─ logo.png                 Logo source (à remplacer par le logo officiel)
-│  ├─ logo-entete.png          Logo allégé (généré)
+│  ├─ logo-entete.png          Symbole CRF pour l'en-tête (généré)
+│  ├─ logo-connexion.png       Logo complet pour la connexion et le PDF (généré)
 │  ├─ favicon.png              (généré)
 │  ├─ sw-rappels.js            Réception des notifications push (inactif pour l'instant)
 │  └─ icons/                   Icônes PWA 192, 512, maskable, apple-touch (générées)
 ├─ scripts/
-│  └─ generer-icones.mjs       npm run icones : régénère toutes les icônes depuis logo.png
+│  └─ generer-icones.mjs       npm run icones : régénère icônes et logos depuis logos/
 ├─ supabase/
 │  ├─ migrations/
 │  │  ├─ 0001_schema.sql       Tables, triggers (profil auto, historique, numérotation)
@@ -253,15 +254,21 @@ La personne reçoit un email, clique sur le lien et choisit son mot de passe.
 
 ## 9. Logo et icônes
 
-Le logo officiel n'a pas pu être récupéré lors de la création du projet. `public/logo.png` contient pour l'instant un **logo provisoire** aux couleurs de la charte. Pour mettre le vrai logo :
+Les logos officiels sont rangés dans `logos/`. Ce dossier n'est pas mis en ligne : ce sont les fichiers sources.
 
-1. Copiez le logo officiel (PNG, idéalement carré, fond transparent ou blanc, au moins 512 px) dans `public/logo.png` en remplaçant le fichier existant.
-2. Lancez :
-   ```powershell
-   npm run icones
-   ```
-   Le script génère `icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-512.png`, `icons/apple-touch-icon.png`, `favicon.png` et `logo-entete.png` (version légère pour l'en-tête).
-3. Redéployez. Sur les téléphones où l'application est déjà installée, l'icône se met à jour après réinstallation.
+| Fichier source | Utilisation |
+|---|---|
+| `logos/logo-icone.png` (carré bleu nuit) | Icônes de l'application (écran d'accueil, PWA, favicon) |
+| `logos/logo-symbole.png` (symbole CRF, fond blanc) | En-tête de l'application |
+| `logos/logo-complet.png` (CRF PERFECTION + sous-titre) | Écran de connexion, en-tête des exports PDF |
+
+Pour changer un logo, remplacez le fichier dans `logos/` (même nom), puis lancez :
+
+```powershell
+npm run icones
+```
+
+Le script régénère dans `public/` des versions légères : `icons/icon-192.png`, `icons/icon-512.png`, `icons/icon-maskable-512.png`, `icons/apple-touch-icon.png`, `favicon.png`, `logo-entete.png` et `logo-connexion.png`. Redéployez ensuite. Sur un téléphone où l'application est déjà installée, la nouvelle icône apparaît après réinstallation.
 
 ---
 

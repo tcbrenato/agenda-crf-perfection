@@ -1,16 +1,14 @@
 /**
- * Génère les icônes PWA à partir de public/logo.png
+ * Génère les images de l'application à partir des logos officiels du dossier logos/ :
  *   npm run icones
  *
- * Produit :
- *   public/icons/icon-192.png           (icône standard 192 px)
- *   public/icons/icon-512.png           (icône standard 512 px)
- *   public/icons/icon-maskable-512.png  (icône Android « adaptative », marge de sécurité)
- *   public/icons/apple-touch-icon.png   (iPhone / iPad, 180 px)
- *   public/favicon.png                  (onglet du navigateur, 64 px)
- *   public/logo-entete.png              (logo allégé pour l'en-tête, 160 px de haut max)
+ *   logos/logo-icone.png    carré bleu nuit (CRF blanc/rouge)  → icônes PWA, favicon
+ *   logos/logo-symbole.png  symbole CRF sur fond blanc         → en-tête de l'application
+ *   logos/logo-complet.png  CRF PERFECTION + sous-titre        → écran de connexion, PDF
  *
- * Remplacez simplement public/logo.png par le logo officiel puis relancez la commande.
+ * Produit dans public/ des versions légères (connexions faibles) :
+ *   icons/icon-192.png, icons/icon-512.png, icons/icon-maskable-512.png,
+ *   icons/apple-touch-icon.png, favicon.png, logo-entete.png, logo-connexion.png
  */
 import sharp from 'sharp'
 import { existsSync, mkdirSync } from 'node:fs'
@@ -18,41 +16,54 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const racine = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const source = path.join(racine, 'public', 'logo.png')
-const dossierIcones = path.join(racine, 'public', 'icons')
-const BLANC = { r: 255, g: 255, b: 255, alpha: 1 }
+const src = (n) => path.join(racine, 'logos', n)
+const pub = (n) => path.join(racine, 'public', n)
+const PNG = { compressionLevel: 9, palette: true, colours: 256, dither: 0, effort: 10 }
 
-if (!existsSync(source)) {
-  console.error('❌ Fichier introuvable : public/logo.png')
-  process.exit(1)
+for (const f of ['logo-icone.png', 'logo-symbole.png', 'logo-complet.png']) {
+  if (!existsSync(src(f))) {
+    console.error(`❌ Fichier introuvable : logos/${f}`)
+    process.exit(1)
+  }
 }
-mkdirSync(dossierIcones, { recursive: true })
+mkdirSync(pub('icons'), { recursive: true })
 
-/** Logo centré sur fond blanc carré, avec une marge (en % de la taille). */
-async function iconeCarree(taille, margePourcent, destination) {
-  const interieur = Math.round(taille * (1 - (2 * margePourcent) / 100))
-  const logo = await sharp(source)
-    .trim({ threshold: 10 }) // retire les bords vides éventuels
-    .resize(interieur, interieur, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-    .toBuffer()
-  await sharp({ create: { width: taille, height: taille, channels: 4, background: BLANC } })
-    .composite([{ input: logo, gravity: 'center' }])
-    .png({ compressionLevel: 9, palette: true })
-    .toFile(destination)
-  console.log('✔', path.relative(racine, destination))
+const ok = (n) => console.log('✔ public/' + n)
+
+// 1) Icônes à partir du carré bleu nuit.
+//    Icônes standard : on recadre au centre (85 %) pour agrandir le symbole.
+//    Icône « maskable » (Android adaptatif) : image entière, le symbole reste dans la zone de sécurité.
+const icone = sharp(src('logo-icone.png'))
+const { width: cote } = await icone.metadata()
+const marge = Math.round(cote * 0.075)
+const recadree = await sharp(src('logo-icone.png'))
+  .extract({ left: marge, top: marge, width: cote - 2 * marge, height: cote - 2 * marge })
+  .toBuffer()
+for (const [taille, nom, entier] of [
+  [192, 'icons/icon-192.png'],
+  [512, 'icons/icon-512.png'],
+  [512, 'icons/icon-maskable-512.png', true],
+  [180, 'icons/apple-touch-icon.png'],
+  [64, 'favicon.png']
+]) {
+  await sharp(entier ? src('logo-icone.png') : recadree).resize(taille, taille, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(pub(nom))
+  ok(nom)
 }
 
-await iconeCarree(192, 8, path.join(dossierIcones, 'icon-192.png'))
-await iconeCarree(512, 8, path.join(dossierIcones, 'icon-512.png'))
-await iconeCarree(512, 20, path.join(dossierIcones, 'icon-maskable-512.png'))
-await iconeCarree(180, 10, path.join(dossierIcones, 'apple-touch-icon.png'))
-await iconeCarree(64, 4, path.join(racine, 'public', 'favicon.png'))
+// 2) En-tête : symbole CRF détouré (bords blancs retirés), 96 px de haut (affiché à 36 px, net sur écran HD)
+await sharp(src('logo-symbole.png'))
+  .trim({ threshold: 20 })
+  .resize({ height: 96 })
+  .png(PNG)
+  .toFile(pub('logo-entete.png'))
+ok('logo-entete.png')
 
-// Logo optimisé pour l'en-tête et l'écran de connexion (léger pour les connexions faibles)
-await sharp(source)
-  .trim({ threshold: 10 })
-  .resize({ height: 160, width: 480, fit: 'inside', withoutEnlargement: true })
-  .png({ compressionLevel: 9, palette: true })
-  .toFile(path.join(racine, 'public', 'logo-entete.png'))
-console.log('✔ public/logo-entete.png')
-console.log('Icônes générées.')
+// 3) Connexion / PDF : logo complet détouré, 720 px de large
+await sharp(src('logo-complet.png'))
+  .trim({ threshold: 20 })
+  .resize({ width: 720 })
+  .flatten({ background: '#ffffff' })
+  .png(PNG)
+  .toFile(pub('logo-connexion.png'))
+ok('logo-connexion.png')
+console.log('Images générées.')

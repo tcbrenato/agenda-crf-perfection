@@ -14,7 +14,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.png', 'logo-entete.png', 'icons/apple-touch-icon.png'],
+      includeAssets: ['favicon.png', 'logo-entete.png', 'logo-connexion.png', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Agenda CRF Perfection',
         short_name: 'Agenda CRF',
@@ -41,7 +41,7 @@ export default defineConfig({
       workbox: {
         // On ne pré-charge que l'essentiel (connexions faibles) ;
         // les modules d'export/import sont téléchargés au premier usage puis gardés en cache.
-        globPatterns: ['index.html', 'assets/index-*.{js,css}', 'assets/inter-latin-wght-*.woff2', 'icons/*.png', 'favicon.png', 'logo-entete.png'],
+        globPatterns: ['index.html', 'assets/index-*.{js,css}', 'assets/inter-latin-wght-*.woff2', 'icons/*.png', 'favicon.png', 'logo-entete.png', 'logo-connexion.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
@@ -52,11 +52,6 @@ export default defineConfig({
             urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/'),
             handler: 'CacheFirst',
             options: { cacheName: 'modules-a-la-demande', expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 60 } }
-          },
-          {
-            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/logo.png',
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'images' }
           }
           // Les appels Supabase ne sont jamais mis en cache par le service worker (données toujours fraîches).
         ]

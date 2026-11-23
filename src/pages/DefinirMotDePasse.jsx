@@ -27,7 +27,7 @@ export default function DefinirMotDePasse() {
   return (
     <div className="page-connexion">
       <div className="page-connexion__haut">
-        <img className="page-connexion__logo" src="/logo-entete.png" alt="CRF Perfection" />
+        <div className="page-connexion__logo"><img src="/logo-connexion.png" alt="CRF Perfection — Centre de recherche et de formation" width="720" height="111" /></div>
         <h1>Bienvenue</h1>
         <p>{utilisateur?.email}</p>
       </div>

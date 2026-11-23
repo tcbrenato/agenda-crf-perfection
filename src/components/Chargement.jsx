@@ -11,7 +11,7 @@ export function SqueletteCartes({ nombre = 4 }) {
 export function ChargementPleinEcran() {
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
-      <img src="/logo-entete.png" alt="CRF Perfection" width="120" style={{ height: 'auto', opacity: 0.9 }} />
+      <img src="/logo-entete.png" alt="CRF Perfection" width="140" height="58" style={{ height: 'auto' }} />
     </div>
   )
 }

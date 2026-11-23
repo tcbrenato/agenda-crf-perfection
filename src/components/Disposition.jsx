@@ -28,7 +28,7 @@ export default function Disposition() {
     <div className="app">
       <header className="entete">
         <div className="entete__barre">
-          <img className="entete__logo" src="/logo-entete.png" alt="CRF Perfection" width="36" height="36" />
+          <img className="entete__logo" src="/logo-entete.png" alt="CRF Perfection" width="87" height="36" />
           <div className="entete__titre">
             Agenda
             <small>CRF Perfection</small>
