@@ -127,17 +127,25 @@ export async function chargerActiviteRecente(limite = 40) {
 }
 
 /** Appelle la fonction Edge « admin-membres » (invitation, désactivation…). */
-export async function adminMembres(action, donnees = {}) {
+export async function adminMembres(action, donnees = {}, nouvelEssai = true) {
   const { data, error } = await supabase.functions.invoke('admin-membres', {
     body: { action, redirectTo: window.location.origin, ...donnees }
   })
+  // Session expirée (onglet resté ouvert, ordinateur en veille…) :
+  // on renouvelle la session puis on réessaie une fois.
+  if (error && error.context?.status === 401 && nouvelEssai) {
+    const { error: e } = await supabase.auth.refreshSession()
+    if (!e) return adminMembres(action, donnees, false)
+  }
   if (error) {
     let message = error.message
     try {
       const corps = await error.context?.json?.()
       if (corps?.erreur) message = corps.erreur
     } catch { /* réponse non JSON */ }
-    if (/Failed to send a request|Function not found|404/i.test(message)) {
+    if (error.context?.status === 401) {
+      message = 'Votre session a expiré. Déconnectez-vous puis reconnectez-vous.'
+    } else if (/Failed to send a request|Function not found|404/i.test(message)) {
       message = "La fonction « admin-membres » n'est pas déployée sur Supabase (voir README)."
     }
     throw new Error(message)

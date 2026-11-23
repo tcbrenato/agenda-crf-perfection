@@ -31,11 +31,36 @@ export default function GestionMembres({ integre = false }) {
 
   const tries = [...profils].sort((a, b) => (b.actif - a.actif) || a.nom_complet.localeCompare(b.nom_complet, 'fr'))
 
+  const [edition, setEdition] = useState(null) // membre en cours de modification
+
+  const enregistrerMembre = async (e) => {
+    e.preventDefault()
+    if (!edition.nom_complet.trim()) return toast.erreur('Le nom complet est obligatoire.')
+    setEnCours(edition.id)
+    try {
+      majProfil(await modifierProfil(edition.id, {
+        nom_complet: edition.nom_complet.trim(),
+        poste: edition.poste.trim() || null,
+        telephone: edition.telephone.trim() || null
+      }))
+      toast.info('Informations enregistrées')
+      setEdition(null)
+    } catch (err) {
+      toast.erreur(messageErreur(err))
+    } finally {
+      setEnCours(null)
+    }
+  }
+
   const envoyerInvitation = async (e) => {
     e.preventDefault()
     setErreur('')
     if (!f.nom_complet.trim()) return setErreur('Indiquez le nom complet.')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return setErreur('Adresse email invalide.')
+    const existant = profils.find((p) => (p.email || '').toLowerCase() === f.email.trim().toLowerCase())
+    if (existant) {
+      return setErreur(`Ce compte existe déjà (${existant.nom_complet}). Fermez cette fenêtre et utilisez « Modifier » sur sa ligne.`)
+    }
     setEnvoi(true)
     try {
       await adminMembres('inviter', f)
@@ -145,6 +170,14 @@ export default function GestionMembres({ integre = false }) {
                       {p.actif ? 'Désactiver' : 'Réactiver'}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className="btn btn--secondaire btn--petit"
+                    disabled={enCours === p.id}
+                    onClick={() => setEdition({ id: p.id, nom_complet: p.nom_complet || '', poste: p.poste || '', telephone: p.telephone || '', email: p.email })}
+                  >
+                    Modifier
+                  </button>
                   {!moi && p.actif && (
                     <button type="button" className="btn btn--fantome btn--petit" disabled={enCours === p.id} onClick={() => renvoyer(p)}>
                       Renvoyer le lien
@@ -156,6 +189,28 @@ export default function GestionMembres({ integre = false }) {
           )
         })}
       </div>
+
+      <FeuilleBas ouvert={Boolean(edition)} titre="Modifier le membre" onFermer={() => setEdition(null)}>
+        {edition && (
+          <form className="pile" onSubmit={enregistrerMembre} noValidate>
+            <p className="texte-doux texte-petit">{edition.email}</p>
+            <div className="champ">
+              <label htmlFor="mod-nom">Nom complet *</label>
+              <input id="mod-nom" className="saisie" value={edition.nom_complet} onChange={(e) => setEdition({ ...edition, nom_complet: e.target.value })} autoComplete="off" />
+            </div>
+            <div className="champ">
+              <label htmlFor="mod-poste">Poste</label>
+              <input id="mod-poste" className="saisie" value={edition.poste} onChange={(e) => setEdition({ ...edition, poste: e.target.value })} />
+            </div>
+            <div className="champ">
+              <label htmlFor="mod-tel">Téléphone</label>
+              <input id="mod-tel" className="saisie" type="tel" inputMode="tel" value={edition.telephone} onChange={(e) => setEdition({ ...edition, telephone: e.target.value })} />
+            </div>
+            <p className="aide texte-tres-petit texte-doux">Le rôle et l'accès se changent directement dans la liste.</p>
+            <button className="btn btn--primaire btn--bloc" type="submit" disabled={enCours === edition.id}>Enregistrer</button>
+          </form>
+        )}
+      </FeuilleBas>
 
       <FeuilleBas ouvert={inviter} titre="Inviter un membre" onFermer={() => setInviter(false)}>
         <form className="pile" onSubmit={envoyerInvitation} noValidate>
