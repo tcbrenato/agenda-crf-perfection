@@ -4,24 +4,30 @@ import { IconeFermer } from './Icones'
 /** Feuille qui monte du bas de l'écran (mobile) / boîte de dialogue centrée (ordinateur). */
 export default function FeuilleBas({ ouvert, titre, onFermer, children }) {
   const ref = useRef(null)
+  // onFermer change à chaque affichage du parent : on garde la dernière version dans une référence,
+  // pour que l'effet ci-dessous ne s'exécute qu'à l'ouverture et à la fermeture
+  // (sinon le focus quittait le champ à chaque lettre tapée).
+  const fermerRef = useRef(onFermer)
+  fermerRef.current = onFermer
 
   useEffect(() => {
     if (!ouvert) return
-    const auClavier = (e) => e.key === 'Escape' && onFermer()
+    const auClavier = (e) => e.key === 'Escape' && fermerRef.current()
     document.addEventListener('keydown', auClavier)
     const ancienDebordement = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const focusPrecedent = document.activeElement
     // met le focus dans la feuille (sauf si un champ s'en charge avec autoFocus)
-    setTimeout(() => {
+    const minuterie = setTimeout(() => {
       if (ref.current && !ref.current.contains(document.activeElement)) ref.current.focus()
     }, 30)
     return () => {
+      clearTimeout(minuterie)
       document.removeEventListener('keydown', auClavier)
       document.body.style.overflow = ancienDebordement
       focusPrecedent?.focus?.()
     }
-  }, [ouvert, onFermer])
+  }, [ouvert])
 
   if (!ouvert) return null
   return (
