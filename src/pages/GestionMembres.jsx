@@ -29,7 +29,6 @@ export default function GestionMembres({ integre = false }) {
     chargerEtatComptes().then(setEtats)
   }, [profils.length])
 
-  const estDG = profil.role === 'dg'
   const tries = [...profils].sort((a, b) => (b.actif - a.actif) || a.nom_complet.localeCompare(b.nom_complet, 'fr'))
 
   const envoyerInvitation = async (e) => {
@@ -109,7 +108,6 @@ export default function GestionMembres({ integre = false }) {
       <div className="carte liste-membres" style={{ padding: '0 14px' }}>
         {tries.map((p) => {
           const moi = p.id === profil.id
-          const dgProtege = p.role === 'dg' && !estDG
           return (
             <div key={p.id} className={`membre ${p.actif ? '' : 'membre--inactif'}`}>
               <span className="avatar">{initiales(p.nom_complet)}</span>
@@ -129,15 +127,15 @@ export default function GestionMembres({ integre = false }) {
                     className="saisie"
                     style={{ width: 'auto', minHeight: 44, flex: '1 1 160px' }}
                     value={p.role}
-                    disabled={moi || dgProtege || enCours === p.id || !p.actif}
+                    disabled={moi || enCours === p.id || !p.actif}
                     onChange={(e) => changerRole(p, e.target.value)}
                     aria-label={`Rôle de ${p.nom_complet}`}
                   >
                     {Object.entries(ROLES).map(([cle, libelle]) => (
-                      <option key={cle} value={cle} disabled={cle === 'dg' && !estDG}>{libelle}</option>
+                      <option key={cle} value={cle}>{libelle}</option>
                     ))}
                   </select>
-                  {!moi && !dgProtege && (
+                  {!moi && (
                     <button
                       type="button"
                       className={`btn btn--petit ${p.actif ? 'btn--alerte' : 'btn--secondaire'}`}
@@ -173,8 +171,8 @@ export default function GestionMembres({ integre = false }) {
             <label htmlFor="inv-role">Rôle</label>
             <select id="inv-role" className="saisie" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>
               <option value="membre">Membre</option>
+              <option value="dg">Directeur Général</option>
               <option value="admin">Administrateur</option>
-              {estDG && <option value="dg">Directeur Général</option>}
             </select>
           </div>
           <div className="champ">

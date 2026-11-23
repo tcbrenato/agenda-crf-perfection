@@ -1,5 +1,11 @@
 // Droits côté interface (la sécurité réelle est assurée par la RLS Supabase).
 
+/** Administrateur de l'agenda : seul accès à la page Administration (comptes, rôles, import). */
+export function estAdmin(profil) {
+  return Boolean(profil && profil.actif && profil.role === 'admin')
+}
+
+/** DG ou administrateur : tous les droits sur les tâches. */
 export function estGestionnaire(profil) {
   return Boolean(profil && profil.actif && (profil.role === 'dg' || profil.role === 'admin'))
 }

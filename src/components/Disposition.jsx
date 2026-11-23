@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { estEchue } from '../lib/statuts'
 import { initiales } from '../lib/texte'
-import { estGestionnaire } from '../lib/droits'
+import { estAdmin } from '../lib/droits'
 import { ROLES } from '../lib/statuts'
 
 const LIENS = [
@@ -40,7 +40,7 @@ export default function Disposition() {
                 <Icone /> {libelle}
               </NavLink>
             ))}
-            {estGestionnaire(profil) && (
+            {estAdmin(profil) && (
               <NavLink to="/admin"><IconeGroupe /> Administration</NavLink>
             )}
           </nav>

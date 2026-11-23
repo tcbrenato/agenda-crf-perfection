@@ -9,9 +9,9 @@ export const STATUTS = {
 export const ORDRE_STATUTS = ['a_faire', 'en_cours', 'bloque', 'termine']
 
 export const ROLES = {
+  membre: 'Membre',
   dg: 'Directeur Général',
-  admin: 'Administrateur',
-  membre: 'Membre'
+  admin: 'Administrateur'
 }
 
 export function estTerminee(t) {

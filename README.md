@@ -45,7 +45,7 @@ on voit ce qui n'est pas encore échu, ce qui est en cours et ce qui est en reta
 | **Formulaire complet** | Description, date, statut, priorité, plusieurs attributaires. |
 | **Calendrier** | Vue mensuelle des échéances (points bleu, rouge et vert). Toucher un jour affiche ses tâches. |
 | **Mon compte** | Profil, changement du mot de passe, installation sur l'écran d'accueil, déconnexion. |
-| **Administration** (DG et administrateurs) | **Aperçu** : membres actifs, invitations en attente, tâches échues, charge par personne. **Membres** : inviter, changer le rôle, désactiver/réactiver, renvoyer le lien, voir la dernière connexion. **Données** : import, export complet Excel/PDF. **Activité** : journal des dernières modifications de toute l'équipe. Accès : bouton « Ouvrir l'administration » dans Mon compte, ou lien dans l'en-tête sur ordinateur. |
+| **Administration** (administrateur uniquement) | **Aperçu** : membres actifs, invitations en attente, tâches échues, charge par personne. **Membres** : inviter, changer le rôle, désactiver/réactiver, renvoyer le lien, voir la dernière connexion. **Données** : import, export complet Excel/PDF. **Activité** : journal des dernières modifications de toute l'équipe. Accès : bouton « Ouvrir l'administration » dans Mon compte, ou lien dans l'en-tête sur ordinateur. |
 
 ### Règles de calcul et d'affichage
 
@@ -81,7 +81,8 @@ agenda-crf-perfection/
 │  │  ├─ 0001_schema.sql       Tables, triggers (profil auto, historique, numérotation)
 │  │  ├─ 0002_rls.sql          Politiques de sécurité (Row Level Security)
 │  │  ├─ 0003_rappels.sql      Architecture des rappels (préparée, non planifiée)
-│  │  └─ 0004_admin.sql        État des comptes pour la page Administration
+│  │  ├─ 0004_admin.sql        État des comptes pour la page Administration
+│  │  └─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (DG/admin)
 │     └─ rappels-echeances/    Envoi des rappels (mode simulation tant que non activé)
@@ -124,6 +125,7 @@ agenda-crf-perfection/
    2. `supabase/migrations/0002_rls.sql`
    3. `supabase/migrations/0003_rappels.sql`
    4. `supabase/migrations/0004_admin.sql`
+   5. `supabase/migrations/0005_roles.sql`
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -208,20 +210,20 @@ npm run icones    # régénère icônes et logos depuis logos/
 
 ---
 
-## 6. Créer le premier compte DG
+## 6. Créer le premier compte administrateur
 
-L'inscription libre est fermée : le premier compte se crée dans Supabase.
+L'inscription libre est fermée : le premier compte se crée dans Supabase. C'est l'**administrateur** de l'agenda (par ex. `contact@crfperfection.pro`). Il crée ensuite tous les autres comptes, y compris celui du DG.
 
 1. **Authentication**, puis **Users**, puis **Add user** et **Create new user** :
-   - Email du DG et mot de passe provisoire
+   - Email et mot de passe provisoire
    - Cochez **Auto Confirm User**
-2. Le profil est créé automatiquement avec le rôle `membre`. Pour le passer en **DG**, allez dans **SQL Editor** et exécutez (remplacez l'email et le nom) :
+2. Le profil est créé automatiquement avec le rôle `membre`. Pour le passer **administrateur**, allez dans **SQL Editor** et exécutez :
    ```sql
    update public.profils
-   set role = 'dg', nom_complet = 'Prénom NOM', poste = 'Directeur Général'
-   where email = 'dg@exemple.com';
+   set role = 'admin', nom_complet = 'Prénom NOM'
+   where email = 'contact@crfperfection.pro';
    ```
-3. Connectez-vous à l'application avec cet email. Le DG peut changer son mot de passe dans **Mon compte**, puis inviter l'équipe (§8).
+3. Connectez-vous, puis allez dans **Mon compte**, **Ouvrir l'administration**, onglet **Membres**, et **Inviter**. Invitez le DG avec le rôle **Directeur Général**, puis le reste de l'équipe.
 
 ---
 
@@ -250,10 +252,11 @@ Toute modification d'une variable d'environnement sur Vercel nécessite un **Red
 Dans **Administration**, onglet **Membres**, puis **Inviter** : nom, email, rôle, poste, téléphone.
 La personne reçoit un email, clique sur le lien et choisit son mot de passe.
 
-- **Changer le rôle** : liste déroulante (seul le DG peut nommer ou retirer un DG).
+- Seul l'**administrateur** a accès à cette page.
+- **Changer le rôle** : liste déroulante (Membre, Directeur Général, Administrateur).
 - **Désactiver** : la personne ne peut plus se connecter. Ses tâches et commentaires sont conservés. Le compte peut être réactivé à tout moment.
 - **Renvoyer le lien** : renvoie l'invitation, ou un lien de réinitialisation si le compte est déjà activé.
-- On ne peut pas se désactiver soi-même, et il reste toujours au moins un DG actif.
+- On ne peut ni modifier son propre rôle ni se désactiver, et il reste toujours au moins un administrateur actif.
 
 ---
 
@@ -279,7 +282,7 @@ Le script régénère dans `public/` des versions légères : `icons/icon-192.pn
 
 ## 10. Import d'une liste existante
 
-Dans **Administration**, onglet **Données**, puis **Importer un fichier** (DG et administrateurs) :
+Dans **Administration**, onglet **Données**, puis **Importer un fichier** (administrateur) :
 
 - Formats : **Excel `.xlsx`** ou **CSV** (séparateur `;` ou `,`, UTF-8 ou format « CSV » d'Excel). Pour un ancien fichier `.xls`, faites **Enregistrer sous**, puis **Classeur Excel (.xlsx)**.
 - Première ligne : les titres **N°, Tâche, Date, Échéance, Attributaire**. Les colonnes **Statut** et **Description** sont facultatives. Les variantes courantes (« Intitulé », « Responsable », « Date limite »…) sont reconnues.
@@ -317,17 +320,18 @@ Sur iPhone, les notifications web ne fonctionnent que si l'application est **ins
 
 La sécurité est assurée **dans la base de données** (Row Level Security et triggers), pas seulement dans l'interface :
 
-| Action | DG / Admin | Membre |
-|---|---|---|
-| Voir toutes les tâches de l'équipe | ✅ | ✅ |
-| Créer une tâche | ✅ | ✅ (il en devient le créateur) |
-| Modifier une tâche (intitulé, échéance…) | ✅ toutes | ✅ seulement celles qu'il a créées |
-| Changer le statut | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |
-| Commenter | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |
-| Assigner des attributaires | ✅ toutes | ✅ seulement sur ses propres tâches |
-| Supprimer une tâche | ✅ | ❌ |
-| Inviter, désactiver, changer un rôle | ✅ (seul le DG gère les DG) | ❌ |
-| Compte désactivé | aucun accès aux données | aucun accès aux données |
+| Action | Administrateur | DG | Membre |
+|---|---|---|---|
+| Page **Administration** (comptes, rôles, invitations, import, journal) | ✅ | ❌ | ❌ |
+| Voir toutes les tâches de l'équipe | ✅ | ✅ | ✅ |
+| Créer une tâche | ✅ | ✅ | ✅ (il en devient le créateur) |
+| Modifier une tâche (intitulé, échéance…) | ✅ toutes | ✅ toutes | ✅ seulement celles qu'il a créées |
+| Changer le statut | ✅ toutes | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |
+| Commenter | ✅ toutes | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |
+| Assigner des attributaires | ✅ toutes | ✅ toutes | ✅ seulement sur ses propres tâches |
+| Supprimer une tâche | ✅ | ✅ | ❌ |
+| Exporter (Excel, PDF) | ✅ | ✅ | ✅ |
+| Compte désactivé | aucun accès | aucun accès | aucun accès |
 
 - Sur une tâche qui lui est attribuée, un membre ne peut changer **que le statut** : toute autre modification est refusée par le trigger `regles_tache`.
 - Le N°, la date de création et le créateur ne peuvent pas être modifiés par un membre.
@@ -344,7 +348,7 @@ Ces règles ont été vérifiées sur PostgreSQL 16 avec des scénarios DG, admi
 |---|---|
 | Écran « Configuration requise » | `.env` absent ou incomplet. Relancez `npm run dev` après l'avoir modifié (sur Vercel : variables d'environnement puis Redeploy). |
 | « Email ou mot de passe incorrect » pour le premier DG | Vérifiez que **Auto Confirm User** était coché, ou confirmez l'utilisateur dans Authentication > Users. |
-| Le DG ne voit pas « Ouvrir l'administration » | Le rôle n'a pas été passé à `dg` : refaites l'étape 6.2. |
+| Le bouton « Ouvrir l'administration » n'apparaît pas | Normal pour le DG et les membres. Pour l'administrateur, vérifiez que son rôle est `admin` (étape 6.2). |
 | « La fonction admin-membres n'est pas déployée » | Déployez la fonction (§3.7) avec exactement ce nom. |
 | L'invitation n'arrive pas | Vérifiez les spams et la limite d'envoi du SMTP intégré (§3.6). Vérifiez aussi les Redirect URLs. |
 | Le lien de l'email ouvre une page d'erreur | Ajoutez l'adresse de l'application dans les **Redirect URLs** (§3.4). Les liens expirent après 24 h : utilisez « Renvoyer le lien ». |

@@ -1,6 +1,6 @@
 // =====================================================================
 //  Fonction Edge « admin-membres » — Agenda CRF Perfection
-//  Réservée au DG et aux administrateurs (vérifié côté serveur).
+//  Réservée à l'ADMINISTRATEUR (vérifié côté serveur). Le DG n'y a pas accès.
 //
 //  Actions (corps JSON) :
 //   { action: 'inviter', email, nom_complet, role, poste?, telephone?, redirectTo? }
@@ -50,8 +50,8 @@ Deno.serve(async (req) => {
   const admin = createClient(url, cleService, { auth: { persistSession: false, autoRefreshToken: false } })
 
   const { data: appelant } = await admin.from('profils').select('id, role, actif').eq('id', user.id).single()
-  if (!appelant || !appelant.actif || !['dg', 'admin'].includes(appelant.role)) {
-    return reponseJson({ erreur: 'Action réservée au DG et aux administrateurs' }, 403)
+  if (!appelant || !appelant.actif || appelant.role !== 'admin') {
+    return reponseJson({ erreur: "Action réservée à l'administrateur" }, 403)
   }
 
   let corps: Record<string, string>
@@ -69,7 +69,6 @@ Deno.serve(async (req) => {
         const role = ROLES.includes(corps.role) ? corps.role : 'membre'
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return reponseJson({ erreur: 'Adresse email invalide' }, 400)
         if (!nom) return reponseJson({ erreur: 'Le nom complet est obligatoire' }, 400)
-        if (role === 'dg' && appelant.role !== 'dg') return reponseJson({ erreur: 'Seul le DG peut inviter un DG' }, 403)
 
         const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
           data: { nom_complet: nom },
@@ -115,15 +114,12 @@ Deno.serve(async (req) => {
 
         const { data: profilCible } = await admin.from('profils').select('role').eq('id', cible).single()
         if (!profilCible) return reponseJson({ erreur: 'Membre introuvable' }, 404)
-        if (profilCible.role === 'dg' && appelant.role !== 'dg') {
-          return reponseJson({ erreur: 'Seul le DG peut modifier l\'accès d\'un DG' }, 403)
-        }
 
         const actif = corps.action === 'reactiver'
-        if (!actif && profilCible.role === 'dg') {
+        if (!actif && profilCible.role === 'admin') {
           const { count } = await admin.from('profils').select('id', { count: 'exact', head: true })
-            .eq('role', 'dg').eq('actif', true).neq('id', cible)
-          if (!count) return reponseJson({ erreur: 'Il doit rester au moins un DG actif' }, 400)
+            .eq('role', 'admin').eq('actif', true).neq('id', cible)
+          if (!count) return reponseJson({ erreur: 'Il doit rester au moins un administrateur actif' }, 400)
         }
 
         const { error: e1 } = await admin.from('profils').update({ actif }).eq('id', cible)

@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext'
 import { useInstallation } from '../hooks/useInstallation'
 import { messageErreur, modifierProfil } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { estGestionnaire } from '../lib/droits'
+import { estAdmin } from '../lib/droits'
 import { ROLES } from '../lib/statuts'
 import { initiales } from '../lib/texte'
 import { notificationsActives } from '../lib/notifications'
@@ -70,7 +70,7 @@ export default function MonCompte() {
         </div>
       </div>
 
-      {estGestionnaire(profil) && (
+      {estAdmin(profil) && (
         <Link to="/admin" className="btn btn--accent btn--bloc" style={{ marginBottom: 16 }}>
           <IconeGroupe /> Ouvrir l'administration
         </Link>

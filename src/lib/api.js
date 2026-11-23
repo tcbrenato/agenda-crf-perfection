@@ -112,7 +112,7 @@ export async function chargerHistorique(tacheId) {
 }
 
 // ------------------------- Gestion des membres -------------------------
-/** État des comptes (invitation acceptée, dernière connexion). Null si la migration 0004 manque. */
+/** État des comptes (invitation acceptée, dernière connexion). Réservé à l'administrateur. */
 export async function chargerEtatComptes() {
   const { data, error } = await supabase.rpc('admin_comptes')
   if (error) return null

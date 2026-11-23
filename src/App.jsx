@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { DonneesProvider } from './context/DonneesContext'
 import { ToastProvider } from './context/ToastContext'
 import { configurationOk } from './lib/supabase'
-import { estGestionnaire } from './lib/droits'
+import { estAdmin } from './lib/droits'
 import Disposition from './components/Disposition'
 import { ChargementPleinEcran } from './components/Chargement'
 import Connexion from './pages/Connexion'
@@ -28,7 +28,7 @@ function Routeur() {
   if (!profil) return erreurProfil ? <CompteInactif erreur={erreurProfil} /> : <ChargementPleinEcran />
   if (!profil.actif) return <CompteInactif />
 
-  const gestionnaire = estGestionnaire(profil)
+  const admin = estAdmin(profil)
   return (
     <DonneesProvider>
       <Routes>
@@ -40,9 +40,9 @@ function Routeur() {
           <Route path="taches/:id/modifier" element={<FormulaireTache />} />
           <Route path="calendrier" element={<Calendrier />} />
           <Route path="compte" element={<MonCompte />} />
-          <Route path="admin" element={gestionnaire ? <Administration /> : <Navigate to="/" replace />} />
+          <Route path="admin" element={admin ? <Administration /> : <Navigate to="/" replace />} />
           <Route path="compte/membres" element={<Navigate to="/admin?onglet=membres" replace />} />
-          <Route path="compte/import" element={gestionnaire ? <Import /> : <Navigate to="/compte" replace />} />
+          <Route path="compte/import" element={admin ? <Import /> : <Navigate to="/compte" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
