@@ -221,10 +221,10 @@ L'inscription libre est fermée : le premier compte se crée dans Supabase.
 
 ## 7. Déployer sur Vercel
 
-1. Poussez le code sur GitHub. Ce dossier peut rester dans un dépôt plus large.
-2. Sur <https://vercel.com>, choisissez **Add New**, puis **Project**, puis **Import** du dépôt.
+1. Le code est sur GitHub : dépôt `tcbrenato/agenda-crf-perfection`, branche `main`.
+2. Sur <https://vercel.com>, choisissez **Add New**, puis **Project**, puis **Import** du dépôt `agenda-crf-perfection`.
 3. Réglages :
-   - **Root Directory** : `agenda-crf-perfection` (**indispensable** si le dossier n'est pas à la racine du dépôt)
+   - **Root Directory** : laisser la valeur par défaut (`./`)
    - **Framework Preset** : Vite (détecté automatiquement). Build : `npm run build`. Output : `dist`.
    - **Environment Variables** : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_NOTIFICATIONS_ACTIVES=false`
 4. **Deploy**. Reportez ensuite l'adresse obtenue dans Supabase, **Authentication**, puis **URL Configuration** : *Site URL* et *Redirect URLs* (§3.4).
