@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import AjoutRapide from './AjoutRapide'
-import { IconeAccueil, IconeCalendrier, IconeCompte, IconePlus, IconeTaches } from './Icones'
+import { IconeAccueil, IconeCalendrier, IconeCompte, IconeGroupe, IconePlus, IconeTaches } from './Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { estEchue } from '../lib/statuts'
 import { initiales } from '../lib/texte'
+import { estGestionnaire } from '../lib/droits'
 import { ROLES } from '../lib/statuts'
 
 const LIENS = [
@@ -22,7 +23,7 @@ export default function Disposition() {
   const { pathname } = useLocation()
 
   const nbEchues = taches.filter((t) => estEchue(t, jour)).length
-  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte')
+  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin')
 
   return (
     <div className="app">
@@ -39,6 +40,9 @@ export default function Disposition() {
                 <Icone /> {libelle}
               </NavLink>
             ))}
+            {estGestionnaire(profil) && (
+              <NavLink to="/admin"><IconeGroupe /> Administration</NavLink>
+            )}
           </nav>
           <div className="entete__droite">
             <NavLink to="/compte" className="avatar" title={`${profil?.nom_complet} — ${ROLES[profil?.role] || ''}`} aria-label="Mon compte" style={{ textDecoration: 'none' }}>

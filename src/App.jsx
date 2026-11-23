@@ -16,8 +16,8 @@ import FicheTache from './pages/FicheTache'
 import FormulaireTache from './pages/FormulaireTache'
 import Calendrier from './pages/Calendrier'
 import MonCompte from './pages/MonCompte'
-import GestionMembres from './pages/GestionMembres'
 import Import from './pages/Import'
+import Administration from './pages/Administration'
 
 function Routeur() {
   const { session, profil, chargement, erreurProfil, doitDefinirMotDePasse } = useAuth()
@@ -40,7 +40,8 @@ function Routeur() {
           <Route path="taches/:id/modifier" element={<FormulaireTache />} />
           <Route path="calendrier" element={<Calendrier />} />
           <Route path="compte" element={<MonCompte />} />
-          <Route path="compte/membres" element={gestionnaire ? <GestionMembres /> : <Navigate to="/compte" replace />} />
+          <Route path="admin" element={gestionnaire ? <Administration /> : <Navigate to="/" replace />} />
+          <Route path="compte/membres" element={<Navigate to="/admin?onglet=membres" replace />} />
           <Route path="compte/import" element={gestionnaire ? <Import /> : <Navigate to="/compte" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -1,17 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FeuilleBas from '../components/FeuilleBas'
 import { IconePlus, IconeRetour } from '../components/Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
-import { adminMembres, messageErreur, modifierProfil } from '../lib/api'
+import { adminMembres, chargerEtatComptes, messageErreur, modifierProfil } from '../lib/api'
+import { formaterHorodatage } from '../lib/dates'
 import { ROLES } from '../lib/statuts'
 import { initiales } from '../lib/texte'
 
 const VIDE = { email: '', nom_complet: '', role: 'membre', poste: '', telephone: '' }
 
-export default function GestionMembres() {
+export default function GestionMembres({ integre = false }) {
   const { profil } = useAuth()
   const { profils, majProfil, recharger } = useDonnees()
   const toast = useToast()
@@ -22,6 +23,11 @@ export default function GestionMembres() {
   const [erreur, setErreur] = useState('')
   const [enCours, setEnCours] = useState(null)
   const [confirmation, setConfirmation] = useState(null)
+  const [etats, setEtats] = useState(null)
+
+  useEffect(() => {
+    chargerEtatComptes().then(setEtats)
+  }, [profils.length])
 
   const estDG = profil.role === 'dg'
   const tries = [...profils].sort((a, b) => (b.actif - a.actif) || a.nom_complet.localeCompare(b.nom_complet, 'fr'))
@@ -85,11 +91,13 @@ export default function GestionMembres() {
 
   return (
     <>
-      <button type="button" className="btn btn--fantome btn--petit retour" onClick={() => naviguer('/compte')}>
-        <IconeRetour /> Mon compte
-      </button>
+      {!integre && (
+        <button type="button" className="btn btn--fantome btn--petit retour" onClick={() => naviguer('/compte')}>
+          <IconeRetour /> Mon compte
+        </button>
+      )}
       <div className="ligne ligne--espace" style={{ marginBottom: 12 }}>
-        <h1 className="titre-page">Membres</h1>
+        {integre ? <h2 className="titre-section" style={{ margin: 0 }}>Membres</h2> : <h1 className="titre-page">Membres</h1>}
         <button className="btn btn--accent btn--petit" onClick={() => { setErreur(''); setInviter(true) }}>
           <IconePlus /> Inviter
         </button>
@@ -109,6 +117,13 @@ export default function GestionMembres() {
                 <div style={{ fontWeight: 650 }}>{p.nom_complet}{moi && ' (vous)'}</div>
                 <div className="texte-doux texte-petit" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.poste || '—'} · {p.email}</div>
                 {!p.actif && <div className="texte-petit" style={{ color: 'var(--rouge)', fontWeight: 600 }}>Compte désactivé</div>}
+                {p.actif && etats?.[p.id] && (
+                  etats[p.id].compte_active ? (
+                    <div className="texte-tres-petit texte-doux">Dernière connexion : {formaterHorodatage(etats[p.id].derniere_connexion)}</div>
+                  ) : (
+                    <div className="texte-tres-petit" style={{ color: '#8f4700', fontWeight: 600 }}>Invitation en attente (envoyée le {formaterHorodatage(etats[p.id].invite_le)})</div>
+                  )
+                )}
                 <div className="ligne" style={{ marginTop: 8, flexWrap: 'wrap' }}>
                   <select
                     className="saisie"

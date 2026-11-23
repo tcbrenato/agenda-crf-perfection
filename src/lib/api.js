@@ -112,6 +112,20 @@ export async function chargerHistorique(tacheId) {
 }
 
 // ------------------------- Gestion des membres -------------------------
+/** État des comptes (invitation acceptée, dernière connexion). Null si la migration 0004 manque. */
+export async function chargerEtatComptes() {
+  const { data, error } = await supabase.rpc('admin_comptes')
+  if (error) return null
+  return Object.fromEntries(data.map((c) => [c.id, c]))
+}
+
+/** Dernières modifications de toute l'équipe (journal d'activité). */
+export async function chargerActiviteRecente(limite = 40) {
+  return verifier(
+    await supabase.from('historique').select('*, taches(id, numero, intitule)').order('date', { ascending: false }).limit(limite)
+  )
+}
+
 /** Appelle la fonction Edge « admin-membres » (invitation, désactivation…). */
 export async function adminMembres(action, donnees = {}) {
   const { data, error } = await supabase.functions.invoke('admin-membres', {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import FeuilleBas from '../components/FeuilleBas'
-import { IconeGroupe, IconeImporter, IconeCle, IconeSortie, IconeSuivant, IconeInstaller, IconeHorloge } from '../components/Icones'
+import { IconeGroupe, IconeCle, IconeSortie, IconeSuivant, IconeInstaller, IconeHorloge } from '../components/Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
@@ -70,6 +70,12 @@ export default function MonCompte() {
         </div>
       </div>
 
+      {estGestionnaire(profil) && (
+        <Link to="/admin" className="btn btn--accent btn--bloc" style={{ marginBottom: 16 }}>
+          <IconeGroupe /> Ouvrir l'administration
+        </Link>
+      )}
+
       <form className="carte carte--padding pile" onSubmit={enregistrer}>
         <h2 style={{ fontSize: '1rem' }}>Mon profil</h2>
         <div className="champ">
@@ -87,15 +93,6 @@ export default function MonCompte() {
         <button className="btn btn--primaire btn--bloc" type="submit" disabled={!modifie || envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
       </form>
 
-      {estGestionnaire(profil) && (
-        <>
-          <h2 className="titre-section">Administration</h2>
-          <nav className="carte liste-reglages" style={{ padding: '0 14px' }}>
-            <Link to="/compte/membres"><IconeGroupe /> Gestion des membres <IconeSuivant className="chevron" /></Link>
-            <Link to="/compte/import"><IconeImporter /> Importer une liste de tâches <IconeSuivant className="chevron" /></Link>
-          </nav>
-        </>
-      )}
 
       <h2 className="titre-section">Application</h2>
       <div className="carte liste-reglages" style={{ padding: '0 14px' }}>

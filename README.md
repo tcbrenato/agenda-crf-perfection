@@ -44,7 +44,8 @@ on voit ce qui n'est pas encore échu, ce qui est en cours et ce qui est en reta
 | **Ajout rapide** | Bouton **+** : intitulé, échéance (raccourcis Aujourd'hui / Demain / 7 j / 15 j / fin du mois), attributaires, puis Enregistrer. Moins de 10 secondes. |
 | **Formulaire complet** | Description, date, statut, priorité, plusieurs attributaires. |
 | **Calendrier** | Vue mensuelle des échéances (points bleu, rouge et vert). Toucher un jour affiche ses tâches. |
-| **Mon compte** | Profil, changement du mot de passe, installation sur l'écran d'accueil, déconnexion. Pour le DG et les administrateurs : **gestion des membres** (inviter, changer le rôle, désactiver, réactiver, renvoyer le lien) et **import**. |
+| **Mon compte** | Profil, changement du mot de passe, installation sur l'écran d'accueil, déconnexion. |
+| **Administration** (DG et administrateurs) | **Aperçu** : membres actifs, invitations en attente, tâches échues, charge par personne. **Membres** : inviter, changer le rôle, désactiver/réactiver, renvoyer le lien, voir la dernière connexion. **Données** : import, export complet Excel/PDF. **Activité** : journal des dernières modifications de toute l'équipe. Accès : bouton « Ouvrir l'administration » dans Mon compte, ou lien dans l'en-tête sur ordinateur. |
 
 ### Règles de calcul et d'affichage
 
@@ -79,7 +80,8 @@ agenda-crf-perfection/
 │  ├─ migrations/
 │  │  ├─ 0001_schema.sql       Tables, triggers (profil auto, historique, numérotation)
 │  │  ├─ 0002_rls.sql          Politiques de sécurité (Row Level Security)
-│  │  └─ 0003_rappels.sql      Architecture des rappels (préparée, non planifiée)
+│  │  ├─ 0003_rappels.sql      Architecture des rappels (préparée, non planifiée)
+│  │  └─ 0004_admin.sql        État des comptes pour la page Administration
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (DG/admin)
 │     └─ rappels-echeances/    Envoi des rappels (mode simulation tant que non activé)
@@ -95,7 +97,7 @@ agenda-crf-perfection/
    │                           TableauTaches, ListeTaches, AjoutRapide, FeuilleBas, MenuStatut,
    │                           PastilleStatut, SelecteurPersonnes, ChampEcheance, Icones…
    └─ pages/                   Connexion, DefinirMotDePasse, Accueil, Taches, FicheTache,
-                               FormulaireTache, Calendrier, MonCompte, GestionMembres, Import…
+                               FormulaireTache, Calendrier, MonCompte, Administration, GestionMembres, Import…
 ```
 
 ### Base de données
@@ -121,6 +123,9 @@ agenda-crf-perfection/
    1. `supabase/migrations/0001_schema.sql`
    2. `supabase/migrations/0002_rls.sql`
    3. `supabase/migrations/0003_rappels.sql`
+   4. `supabase/migrations/0004_admin.sql`
+
+   Ou, en une seule fois : `supabase/installation_complete.sql`.
 
    Chaque exécution doit afficher « Success. No rows returned ».
 3. **Fermer l'inscription libre** : **Authentication**, puis **Sign In / Providers**. Désactivez **Allow new users to sign up**. Laissez le fournisseur **Email** activé.
@@ -242,7 +247,7 @@ Toute modification d'une variable d'environnement sur Vercel nécessite un **Red
 
 ## 8. Inviter les membres
 
-Dans **Mon compte**, puis **Gestion des membres**, puis **Inviter** : nom, email, rôle, poste, téléphone.
+Dans **Administration**, onglet **Membres**, puis **Inviter** : nom, email, rôle, poste, téléphone.
 La personne reçoit un email, clique sur le lien et choisit son mot de passe.
 
 - **Changer le rôle** : liste déroulante (seul le DG peut nommer ou retirer un DG).
@@ -274,7 +279,7 @@ Le script régénère dans `public/` des versions légères : `icons/icon-192.pn
 
 ## 10. Import d'une liste existante
 
-Dans **Mon compte**, puis **Importer une liste de tâches** (DG et administrateurs) :
+Dans **Administration**, onglet **Données**, puis **Importer un fichier** (DG et administrateurs) :
 
 - Formats : **Excel `.xlsx`** ou **CSV** (séparateur `;` ou `,`, UTF-8 ou format « CSV » d'Excel). Pour un ancien fichier `.xls`, faites **Enregistrer sous**, puis **Classeur Excel (.xlsx)**.
 - Première ligne : les titres **N°, Tâche, Date, Échéance, Attributaire**. Les colonnes **Statut** et **Description** sont facultatives. Les variantes courantes (« Intitulé », « Responsable », « Date limite »…) sont reconnues.

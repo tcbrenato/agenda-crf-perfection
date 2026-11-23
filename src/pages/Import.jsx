@@ -105,8 +105,8 @@ export default function Import() {
 
   return (
     <>
-      <button type="button" className="btn btn--fantome btn--petit retour" onClick={() => naviguer('/compte')}>
-        <IconeRetour /> Mon compte
+      <button type="button" className="btn btn--fantome btn--petit retour" onClick={() => naviguer('/admin?onglet=donnees')}>
+        <IconeRetour /> Administration
       </button>
       <h1 className="titre-page" style={{ marginBottom: 8 }}>Importer des tâches</h1>
       <p className="texte-doux" style={{ marginBottom: 16 }}>
