@@ -41,7 +41,7 @@ export default defineConfig({
       workbox: {
         // On ne pré-charge que l'essentiel (connexions faibles) ;
         // les modules d'export/import sont téléchargés au premier usage puis gardés en cache.
-        globPatterns: ['index.html', 'assets/index-*.{js,css}', 'assets/inter-latin-wght-*.woff2', 'icons/*.png', 'favicon.png', 'logo-entete.png', 'logo-connexion.png'],
+        globPatterns: ['index.html', 'assets/index-*.{js,css}', 'assets/inter-latin-wght-*.woff2', 'icons/*.png', 'favicon.png', 'logo-entete.png', 'logo-connexion.png', 'filigrane.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,

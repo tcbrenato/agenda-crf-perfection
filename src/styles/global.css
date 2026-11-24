@@ -66,6 +66,23 @@ body {
 }
 
 img { max-width: 100%; display: block; }
+
+/* Filigrane : symbole CRF répété en diagonale, très léger, sur toute la plateforme.
+   Il ne capte aucun clic et reste sous les fenêtres (feuilles, messages). */
+body::after {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background-image: url('/filigrane.png');
+  background-repeat: repeat;
+  background-size: 240px auto;
+  transform: rotate(-30deg);
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 50;
+}
+@media print { body::after { display: none; } }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3, p { margin: 0; }
