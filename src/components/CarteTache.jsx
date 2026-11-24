@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import PastilleStatut from './PastilleStatut'
+import BadgesTache from './BadgesTache'
 import { IconeCalendrier, IconeCoche, IconePersonne, IconeActualiser, IconeTaches } from './Icones'
 import { delai, estEchue, estTerminee } from '../lib/statuts'
 import { formaterDate } from '../lib/dates'
@@ -117,6 +118,7 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
           <div className="carte-tache__haut">
             <span className="numero">N° {tache.numero}</span>
             {tache.priorite === 'haute' && !terminee && <span className="badge-haute">Priorité haute</span>}
+            <BadgesTache tache={tache} />
           </div>
           <h3 className="carte-tache__titre">{tache.intitule}</h3>
           <div className="carte-tache__infos">

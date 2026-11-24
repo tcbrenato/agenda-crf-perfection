@@ -4,6 +4,7 @@ import FeuilleBas from './FeuilleBas'
 import { IconeCloche } from './Icones'
 import { useDonnees } from '../context/DonneesContext'
 import { formaterDate, formaterHorodatage } from '../lib/dates'
+import { texteNotification } from '../lib/notificationsTexte'
 
 /** Bouton cloche + liste des notifications. `variante` : 'icone' (en-tête mobile) ou 'menu' (barre latérale). */
 export default function Notifications({ notifications, variante = 'icone' }) {
@@ -47,12 +48,14 @@ export default function Notifications({ notifications, variante = 'icone' }) {
         )}
         {liste.length === 0 && <p className="vide">Aucune notification pour l'instant.</p>}
         <div className="liste-notifications">
-          {liste.map((n) => (
+          {liste.map((n) => {
+            const { auteur, action } = texteNotification(n, profilsParId)
+            return (
             <button key={n.id} type="button" className={`notification ${n.lu ? '' : 'notification--non-lue'}`} onClick={() => ouvrir(n)}>
               <span className="notification__point" aria-hidden="true" />
               <span className="notification__corps">
                 <span>
-                  <strong>{profilsParId[n.auteur_id]?.nom_complet || 'Quelqu’un'}</strong> vous a confié la tâche{' '}
+                  {auteur && <strong>{auteur}</strong>} {action}{' '}
                   {n.taches ? <strong>N° {n.taches.numero} — {n.taches.intitule}</strong> : '(supprimée)'}
                 </span>
                 <span className="notification__date">
@@ -61,7 +64,8 @@ export default function Notifications({ notifications, variante = 'icone' }) {
                 </span>
               </span>
             </button>
-          ))}
+            )
+          })}
         </div>
       </FeuilleBas>
     </>

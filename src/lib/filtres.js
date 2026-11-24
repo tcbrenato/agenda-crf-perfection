@@ -25,10 +25,12 @@ export function correspondStatut(t, filtre, jour) {
   }
 }
 
-export function filtrerTaches(taches, { filtre = 'toutes', personne = null, recherche = '', jour, profilsParId = {} }) {
+export function filtrerTaches(taches, { filtre = 'toutes', personne = null, projet = null, recherche = '', jour, profilsParId = {} }) {
   const q = normaliser(recherche)
   return taches.filter((t) => {
     if (!correspondStatut(t, filtre, jour)) return false
+    if (projet === 'aucun' && t.projet_id) return false
+    if (projet && projet !== 'aucun' && t.projet_id !== projet) return false
     if (personne === 'aucun' && t.attribues.length) return false
     if (personne && personne !== 'aucun' && !t.attribues.includes(personne)) return false
     if (q) {
@@ -40,11 +42,13 @@ export function filtrerTaches(taches, { filtre = 'toutes', personne = null, rech
   })
 }
 
-export function libelleFiltres({ filtre, personne, recherche, profilsParId, moiId }) {
+export function libelleFiltres({ filtre, personne, projet, recherche, profilsParId, projetsParId = {}, moiId }) {
   const morceaux = [FILTRES_STATUT.find((f) => f.cle === filtre)?.libelle || 'Toutes']
   if (personne === moiId) morceaux.push('Mes tâches')
   else if (personne === 'aucun') morceaux.push('Non attribuées')
   else if (personne) morceaux.push(profilsParId[personne]?.nom_complet || '')
+  if (projet === 'aucun') morceaux.push('Sans projet')
+  else if (projet) morceaux.push(projetsParId[projet]?.nom || '')
   if (recherche) morceaux.push(`« ${recherche} »`)
   return morceaux.join(' · ')
 }

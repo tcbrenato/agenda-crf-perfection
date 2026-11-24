@@ -12,7 +12,7 @@ import { estGestionnaire } from '../lib/droits'
 /** Ajout d'une tâche en moins de 10 secondes : intitulé, échéance, attributaire(s). */
 export default function AjoutRapide({ ouvert, onFermer }) {
   const { profil } = useAuth()
-  const { profilsAssignables, remplacerTache } = useDonnees()
+  const { profilsAssignables, projetsActifs, remplacerTache } = useDonnees()
   const toast = useToast()
   const naviguer = useNavigate()
 
@@ -20,7 +20,8 @@ export default function AjoutRapide({ ouvert, onFermer }) {
     intitule: '',
     echeance: '',
     attribues: estGestionnaire(profil) ? [] : [profil?.id].filter(Boolean),
-    haute: false
+    haute: false,
+    projet_id: ''
   })
   const [f, setF] = useState(valeursInitiales)
   const [envoi, setEnvoi] = useState(false)
@@ -43,7 +44,7 @@ export default function AjoutRapide({ ouvert, onFermer }) {
     setErreur('')
     try {
       const tache = await creerTache(
-        { intitule: f.intitule.trim(), echeance: f.echeance, priorite: f.haute ? 'haute' : 'normale' },
+        { intitule: f.intitule.trim(), echeance: f.echeance, priorite: f.haute ? 'haute' : 'normale', ...(f.projet_id ? { projet_id: f.projet_id } : {}) },
         f.attribues
       )
       remplacerTache(tache)
@@ -87,6 +88,16 @@ export default function AjoutRapide({ ouvert, onFermer }) {
             moiId={profil?.id}
           />
         </div>
+
+        {projetsActifs.length > 0 && (
+          <div className="champ">
+            <label htmlFor="ajout-projet">Projet</label>
+            <select id="ajout-projet" className="saisie" value={f.projet_id} onChange={(e) => setF({ ...f, projet_id: e.target.value })}>
+              <option value="">Aucun projet</option>
+              {projetsActifs.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+            </select>
+          </div>
+        )}
 
         <label className="interrupteur">
           <span style={{ fontWeight: 600 }}>Priorité haute</span>

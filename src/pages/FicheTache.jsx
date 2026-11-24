@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import PastilleStatut from '../components/PastilleStatut'
 import MenuStatut from '../components/MenuStatut'
+import ReportsTache from '../components/ReportsTache'
+import EtapesTache from '../components/EtapesTache'
+import PiecesJointesTache from '../components/PiecesJointesTache'
+import BadgesTache from '../components/BadgesTache'
 import FeuilleBas from '../components/FeuilleBas'
 import { SqueletteCartes } from '../components/Chargement'
 import { IconeRetour, IconeCrayon, IconePoubelle, IconeEnvoyer, IconeTelephone, IconeCoche, IconeActualiser } from '../components/Icones'
@@ -153,6 +157,7 @@ export default function FicheTache() {
           <div className="ligne" style={{ flexWrap: 'wrap', marginBottom: 6 }}>
             <span className="numero" style={{ fontSize: '0.9375rem' }}>N° {tache.numero}</span>
             {tache.priorite === 'haute' && <span className="badge-haute">Priorité haute</span>}
+            <BadgesTache tache={tache} />
           </div>
           <h1 className="fiche__titre">{tache.intitule}</h1>
 
@@ -178,12 +183,16 @@ export default function FicheTache() {
             </div>
           )}
 
+          <ReportsTache tache={tache} />
+
           {tache.description && (
             <>
               <h2 className="titre-section">Description</h2>
               <p className="description carte carte--padding">{tache.description}</p>
             </>
           )}
+
+          <EtapesTache tache={tache} />
 
           <h2 className="titre-section">Attributaire{tache.attribues.length > 1 ? 's' : ''} <span className="compte">({tache.attribues.length})</span></h2>
           <div className="carte" style={{ padding: '2px 14px' }}>
@@ -223,6 +232,8 @@ export default function FicheTache() {
               </p>
             </div>
           )}
+
+          <PiecesJointesTache tache={tache} />
 
           {(peutModifier(profil, tache) || peutSupprimer(profil)) && (
             <div className="ligne" style={{ marginTop: 16, gap: 10 }}>

@@ -1,4 +1,5 @@
 import PastilleStatut from './PastilleStatut'
+import BadgesTache from './BadgesTache'
 import { nomsAttribues, nomsConfieePar } from './CarteTache'
 import { delai, estEchue, estTerminee } from '../lib/statuts'
 import { formaterDate } from '../lib/dates'
@@ -32,6 +33,7 @@ export default function TableauTaches({ taches, profilsParId, jour, profil, onOu
                   {t.intitule}
                   {t.priorite === 'haute' && !estTerminee(t) && <> <span className="badge-haute">Haute</span></>}
                   {par && <div className="confiee-par" style={{ fontWeight: 400 }}>Confiée par <strong>{par}</strong></div>}
+                  <div className="ligne" style={{ gap: 10, flexWrap: 'wrap', fontWeight: 400 }}><BadgesTache tache={t} /></div>
                 </td>
                 <td>{formaterDate(t.date_creation)}</td>
                 <td>{formaterDate(t.echeance)}</td>

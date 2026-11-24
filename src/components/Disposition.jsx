@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import AjoutRapide from './AjoutRapide'
 import Notifications from './Notifications'
-import { IconeAccueil, IconeCalendrier, IconeCompte, IconeGroupe, IconePlus, IconeTaches } from './Icones'
+import { IconeAccueil, IconeCalendrier, IconeCompte, IconeDossier, IconeGroupe, IconePlus, IconeStats, IconeTaches } from './Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
 import { useNotifications } from '../hooks/useNotifications'
 import { estEchue, ROLES } from '../lib/statuts'
 import { initiales } from '../lib/texte'
-import { estAdmin } from '../lib/droits'
+import { texteNotification } from '../lib/notificationsTexte'
+import { estAdmin, estGestionnaire } from '../lib/droits'
 
 const LIENS = [
   { vers: '/', libelle: 'Accueil', Icone: IconeAccueil, fin: true },
@@ -31,16 +32,16 @@ export default function Disposition() {
     surNouvelle: (nouvelles) => {
       recharger()
       const n = nouvelles[0]
-      const auteur = profilsParId[n.auteur_id]?.nom_complet || 'Quelqu’un'
+      const { auteur, action } = texteNotification(n, profilsParId)
       toast.info(
-        nouvelles.length > 1 ? `${nouvelles.length} nouvelles tâches vous ont été confiées` : `${auteur} vous a confié la tâche N° ${n.taches?.numero ?? ''}`,
+        nouvelles.length > 1 ? `${nouvelles.length} nouvelles notifications` : `${auteur} ${action} N° ${n.taches?.numero ?? ''}`.trim(),
         n.taches ? { action: { libelle: 'Voir', onClick: () => naviguer(`/taches/${n.taches.id}`) } } : undefined
       )
     }
   })
 
   const nbEchues = taches.filter((t) => estEchue(t, jour)).length
-  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin')
+  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin') || pathname.startsWith('/statistiques')
   const admin = estAdmin(profil)
 
   const pastilleEchues = nbEchues > 0 && (
@@ -67,6 +68,12 @@ export default function Disposition() {
               {vers === '/taches' && pastilleEchues}
             </NavLink>
           ))}
+          {estGestionnaire(profil) && (
+            <>
+              <NavLink to="/projets" className="lien-lateral"><IconeDossier /> Projets</NavLink>
+              <NavLink to="/statistiques" className="lien-lateral"><IconeStats /> Statistiques</NavLink>
+            </>
+          )}
           <Notifications notifications={notifications} variante="menu" />
           {admin && (
             <NavLink to="/admin" className="lien-lateral">

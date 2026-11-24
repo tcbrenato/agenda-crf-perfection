@@ -39,7 +39,7 @@ function texteActivite(h) {
 
 export default function Administration() {
   const { profil } = useAuth()
-  const { taches, profils, profilsParId, jour, recharger } = useDonnees()
+  const { taches, profils, profilsParId, projetsParId, jour, recharger } = useDonnees()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const onglet = ONGLETS.some((o) => o.cle === params.get('onglet')) ? params.get('onglet') : 'apercu'
@@ -85,8 +85,8 @@ export default function Administration() {
     try {
       const { exporterExcel, exporterPDF } = await import('../lib/export')
       const liste = [...taches].sort(trierParNumero)
-      if (format === 'excel') await exporterExcel(liste, profilsParId, 'Toutes les tâches')
-      else await exporterPDF(liste, profilsParId, 'Toutes les tâches')
+      if (format === 'excel') await exporterExcel(liste, profilsParId, 'Toutes les tâches', projetsParId)
+      else await exporterPDF(liste, profilsParId, 'Toutes les tâches', projetsParId)
     } catch (e) {
       toast.erreur(`Export impossible : ${messageErreur(e)}`)
     } finally {

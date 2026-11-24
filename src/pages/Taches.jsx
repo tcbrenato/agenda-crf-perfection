@@ -15,7 +15,7 @@ import { estGestionnaire } from '../lib/droits'
 
 export default function Taches() {
   const { profil } = useAuth()
-  const { taches, profilsAssignables, profilsParId, jour, chargement } = useDonnees()
+  const { taches, profilsAssignables, profilsParId, projetsActifs, projetsParId, jour, chargement } = useDonnees()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const [exportOuvert, setExportOuvert] = useState(false)
@@ -24,6 +24,7 @@ export default function Taches() {
   const filtre = params.get('filtre') || 'toutes'
   const personne = params.get('portee') === 'moi' ? profil.id : params.get('personne')
   const recherche = params.get('q') || ''
+  const projet = params.get('projet')
   const tri = params.get('tri') || 'echeance'
 
   const majParam = (cle, valeur) => {
@@ -35,22 +36,22 @@ export default function Taches() {
   }
 
   const resultat = useMemo(() => {
-    const liste = filtrerTaches(taches, { filtre, personne, recherche, jour, profilsParId })
+    const liste = filtrerTaches(taches, { filtre, personne, projet, recherche, jour, profilsParId })
     return liste.sort(tri === 'numero' ? trierParNumero : trierParEcheance)
-  }, [taches, filtre, personne, recherche, jour, profilsParId, tri])
+  }, [taches, filtre, personne, projet, recherche, jour, profilsParId, tri])
 
   // nombre de tâches par filtre de statut (pour la personne sélectionnée)
   const compte = (cle) =>
     taches.filter((t) => correspondStatut(t, cle, jour) && (!personne || t.attribues.includes(personne))).length
 
-  const sousTitre = libelleFiltres({ filtre, personne, recherche, profilsParId, moiId: profil.id })
+  const sousTitre = libelleFiltres({ filtre, personne, projet, recherche, profilsParId, projetsParId, moiId: profil.id })
 
   const lancerExport = async (format) => {
     setExportEnCours(format)
     try {
       const { exporterExcel, exporterPDF } = await import('../lib/export')
-      if (format === 'excel') await exporterExcel(resultat, profilsParId, sousTitre)
-      else await exporterPDF(resultat, profilsParId, sousTitre)
+      if (format === 'excel') await exporterExcel(resultat, profilsParId, sousTitre, projetsParId)
+      else await exporterPDF(resultat, profilsParId, sousTitre, projetsParId)
       setExportOuvert(false)
       toast.info(format === 'excel' ? 'Fichier Excel téléchargé' : 'Fichier PDF téléchargé')
     } catch (e) {
@@ -91,6 +92,14 @@ export default function Taches() {
         </select>
       </div>
 
+      {projetsActifs.length > 0 && (
+        <select className="saisie" style={{ marginBottom: 10 }} value={projet || ''} onChange={(e) => majParam('projet', e.target.value || null)} aria-label="Filtrer par projet">
+          <option value="">Tous les projets</option>
+          {projetsActifs.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+          <option value="aucun">Sans projet</option>
+        </select>
+      )}
+
       {/* Filtres rapides */}
       <div className="puces" role="group" aria-label="Filtrer par statut">
         {FILTRES_STATUT.slice(0, 1).map((f) => (
@@ -128,7 +137,7 @@ export default function Taches() {
 
       <div className="ligne ligne--espace texte-doux texte-petit" style={{ margin: '10px 0' }}>
         <span>{pluriel(resultat.length, 'tâche')} · {sousTitre}</span>
-        {(filtre !== 'toutes' || personne || recherche) && (
+        {(filtre !== 'toutes' || personne || projet || recherche) && (
           <button type="button" className="btn btn--fantome btn--petit" onClick={() => setParams({}, { replace: true })} style={{ minHeight: 36, padding: '0 6px' }}>
             <IconeFermer /> Effacer
           </button>

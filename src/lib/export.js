@@ -2,7 +2,7 @@
 import { aujourdhui, formaterDate } from './dates'
 import { STATUTS, delai, estEchue, estTerminee } from './statuts'
 
-function lignes(taches, profilsParId, jour) {
+function lignes(taches, profilsParId, jour, projetsParId = {}) {
   return taches.map((t) => ({
     numero: t.numero,
     intitule: t.intitule,
@@ -12,6 +12,7 @@ function lignes(taches, profilsParId, jour) {
     statut: STATUTS[t.statut]?.libelle || t.statut,
     delai: delai(t, jour).texte,
     priorite: t.priorite === 'haute' ? 'Haute' : 'Normale',
+    projet: projetsParId[t.projet_id]?.nom || '',
     description: t.description || '',
     echue: estEchue(t, jour),
     terminee: estTerminee(t)
@@ -22,17 +23,17 @@ function nomFichier(extension) {
   return `Agenda-CRF-Perfection_${aujourdhui()}.${extension}`
 }
 
-export async function exporterExcel(taches, profilsParId, sousTitre = '') {
+export async function exporterExcel(taches, profilsParId, sousTitre = '', projetsParId = {}) {
   const { default: writeExcelFile } = await import('write-excel-file/browser')
   const jour = aujourdhui()
-  const entete = ['N°', 'Tâche', 'Date', 'Échéance', 'Attributaire(s)', 'Statut', 'Délai', 'Priorité', 'Description']
+  const entete = ['N°', 'Tâche', 'Date', 'Échéance', 'Attributaire(s)', 'Statut', 'Délai', 'Priorité', 'Projet', 'Description']
   const styleEntete = { fontWeight: 'bold', backgroundColor: '#1B2A41', textColor: '#FFFFFF', alignVertical: 'center', height: 22 }
   const donnees = [
-    [{ value: 'Agenda CRF Perfection — Suivi des tâches', fontWeight: 'bold', fontSize: 14, textColor: '#1B2A41', columnSpan: 9 }, null, null, null, null, null, null, null, null],
-    [{ value: `${sousTitre ? sousTitre + ' — ' : ''}Édité le ${formaterDate(jour)} — ${taches.length} tâche(s)`, textColor: '#5B6576', columnSpan: 9 }, null, null, null, null, null, null, null, null],
+    [{ value: 'Agenda CRF Perfection — Suivi des tâches', fontWeight: 'bold', fontSize: 14, textColor: '#1B2A41', columnSpan: 10 }, null, null, null, null, null, null, null, null, null],
+    [{ value: `${sousTitre ? sousTitre + ' — ' : ''}Édité le ${formaterDate(jour)} — ${taches.length} tâche(s)`, textColor: '#5B6576', columnSpan: 10 }, null, null, null, null, null, null, null, null, null],
     [],
     entete.map((v) => ({ value: v, ...styleEntete })),
-    ...lignes(taches, profilsParId, jour).map((l) => {
+    ...lignes(taches, profilsParId, jour, projetsParId).map((l) => {
       const style = l.echue ? { textColor: '#C8202F' } : l.terminee ? { textColor: '#8A93A3' } : {}
       return [
         { value: l.numero, type: Number, align: 'center' },
@@ -43,12 +44,13 @@ export async function exporterExcel(taches, profilsParId, sousTitre = '') {
         { value: l.statut },
         { value: l.delai, ...style, ...(l.echue ? { fontWeight: 'bold' } : {}) },
         { value: l.priorite },
+        { value: l.projet },
         { value: l.description, wrap: true }
       ]
     })
   ]
   await writeExcelFile(donnees, {
-    columns: [{ width: 7 }, { width: 48 }, { width: 12 }, { width: 12 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 10 }, { width: 50 }],
+    columns: [{ width: 7 }, { width: 48 }, { width: 12 }, { width: 12 }, { width: 30 }, { width: 12 }, { width: 18 }, { width: 10 }, { width: 20 }, { width: 50 }],
     sheet: 'Tâches',
     stickyRowsCount: 4,
     orientation: 'landscape',
@@ -72,7 +74,7 @@ async function imageEnDataUrl(url) {
   }
 }
 
-export async function exporterPDF(taches, profilsParId, sousTitre = '') {
+export async function exporterPDF(taches, profilsParId, sousTitre = '', projetsParId = {}) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
   const jour = aujourdhui()
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
@@ -93,11 +95,11 @@ export async function exporterPDF(taches, profilsParId, sousTitre = '') {
   doc.setLineWidth(0.8)
   doc.line(14, 28, largeur - 14, 28)
 
-  const donnees = lignes(taches, profilsParId, jour)
+  const donnees = lignes(taches, profilsParId, jour, projetsParId)
   autoTable(doc, {
     startY: 32,
     head: [['N°', 'Tâche', 'Date', 'Échéance', 'Attributaire(s)', 'Statut', 'Délai']],
-    body: donnees.map((l) => [l.numero, l.intitule + (l.priorite === 'Haute' && !l.terminee ? '  (priorité haute)' : ''), l.date, l.echeance || '—', l.attributaires || '—', l.statut, l.delai]),
+    body: donnees.map((l) => [l.numero, l.intitule + (l.priorite === 'Haute' && !l.terminee ? '  (priorité haute)' : '') + (l.projet ? `\n${l.projet}` : ''), l.date, l.echeance || '—', l.attributaires || '—', l.statut, l.delai]),
     styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.2, textColor: [27, 42, 65], lineColor: [227, 230, 235], lineWidth: 0.2, valign: 'middle' },
     headStyles: { fillColor: [27, 42, 65], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [247, 248, 250] },

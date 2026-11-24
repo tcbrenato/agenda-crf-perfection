@@ -13,6 +13,8 @@ export function messageErreur(e) {
     return "Action non autorisée pour votre compte."
   }
   if (/duplicate key.*numero/i.test(brut)) return 'Ce numéro de tâche est déjà utilisé.'
+  if (/demandes_report_une_en_attente/i.test(brut)) return 'Vous avez déjà une demande de report en attente pour cette tâche.'
+  if (/duplicate key.*projets_nom/i.test(brut)) return 'Un projet porte déjà ce nom.'
   if (/JWT expired|invalid JWT/i.test(brut)) return 'Votre session a expiré. Reconnectez-vous.'
   if (/Password should be at least/i.test(brut)) return 'Le mot de passe doit contenir au moins 8 caractères.'
   if (/same password|different from the old/i.test(brut)) return "Le nouveau mot de passe doit être différent de l'ancien."
@@ -39,13 +41,20 @@ export async function modifierProfil(id, champs) {
 }
 
 // ------------------------------- Tâches --------------------------------
-const SELECTION_TACHE = '*, attributions(profil_id, attribue_par, attribue_le)'
+const SELECTION_TACHE = '*, attributions(profil_id, attribue_par, attribue_le), etapes(fait)'
+// Sélection de secours si la migration 0007 (étapes) n'est pas encore appliquée
+const SELECTION_TACHE_BASE = '*, attributions(profil_id, attribue_par, attribue_le)'
 
 function enrichir(t) {
   const { attributions, ...reste } = t
   const liste = attributions || []
+  const etapes = reste.etapes || []
+  delete reste.etapes
   return {
     ...reste,
+    recurrence: reste.recurrence || 'aucune',
+    etapesTotal: etapes.length,
+    etapesFaites: etapes.filter((e) => e.fait).length,
     attribues: liste.map((a) => a.profil_id),
     // traçabilité : qui a attribué la tâche à qui, et quand
     attributionsDetail: liste.map((a) => ({ profil_id: a.profil_id, attribue_par: a.attribue_par, attribue_le: a.attribue_le }))
@@ -60,14 +69,19 @@ export function confieePar(tache) {
 }
 
 export async function chargerTaches() {
-  const data = verifier(
-    await supabase.from('taches').select(SELECTION_TACHE).order('numero', { ascending: true }).limit(5000)
-  )
-  return data.map(enrichir)
+  let r = await supabase.from('taches').select(SELECTION_TACHE).order('numero', { ascending: true }).limit(5000)
+  if (r.error && !/fetch/i.test(r.error.message)) {
+    r = await supabase.from('taches').select(SELECTION_TACHE_BASE).order('numero', { ascending: true }).limit(5000)
+  }
+  return verifier(r).map(enrichir)
 }
 
 export async function chargerTache(id) {
-  const data = verifier(await supabase.from('taches').select(SELECTION_TACHE).eq('id', id).maybeSingle())
+  let r = await supabase.from('taches').select(SELECTION_TACHE).eq('id', id).maybeSingle()
+  if (r.error && !/fetch/i.test(r.error.message)) {
+    r = await supabase.from('taches').select(SELECTION_TACHE_BASE).eq('id', id).maybeSingle()
+  }
+  const data = verifier(r)
   return data ? enrichir(data) : null
 }
 
@@ -158,6 +172,96 @@ export async function supprimerCommentaire(id) {
 
 export async function chargerHistorique(tacheId) {
   return verifier(await supabase.from('historique').select('*').eq('tache_id', tacheId).order('date', { ascending: false }))
+}
+
+// -------------------------------- Projets --------------------------------
+export async function chargerProjets() {
+  const { data, error } = await supabase.from('projets').select('*').order('nom')
+  return error ? [] : data // table absente (migration 0007 non appliquée) : pas de projets
+}
+export async function enregistrerProjet(projet) {
+  const { id, ...champs } = projet
+  return verifier(
+    id
+      ? await supabase.from('projets').update(champs).eq('id', id).select().single()
+      : await supabase.from('projets').insert(champs).select().single()
+  )
+}
+export async function supprimerProjet(id) {
+  verifier(await supabase.from('projets').delete().eq('id', id))
+}
+
+// ------------------------------- Étapes ---------------------------------
+export async function chargerEtapes(tacheId) {
+  return verifier(await supabase.from('etapes').select('*').eq('tache_id', tacheId).order('ordre').order('cree_le'))
+}
+export async function ajouterEtape(tacheId, texte, ordre) {
+  return verifier(await supabase.from('etapes').insert({ tache_id: tacheId, texte, ordre }).select().single())
+}
+export async function cocherEtape(id, fait) {
+  verifier(await supabase.from('etapes').update({ fait }).eq('id', id))
+}
+export async function supprimerEtape(id) {
+  verifier(await supabase.from('etapes').delete().eq('id', id))
+}
+
+// ---------------------------- Pièces jointes ----------------------------
+const BUCKET = 'pieces-jointes'
+export const TAILLE_MAX_PJ = 10 * 1024 * 1024
+
+export async function chargerPiecesJointes(tacheId) {
+  return verifier(await supabase.from('pieces_jointes').select('*').eq('tache_id', tacheId).order('cree_le'))
+}
+export async function ajouterPieceJointe(tacheId, fichier) {
+  if (fichier.size > TAILLE_MAX_PJ) throw new Error('Fichier trop lourd (10 Mo maximum).')
+  const propre = fichier.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w.\-]+/g, '_').slice(-80)
+  const chemin = `${tacheId}/${Date.now()}-${propre}`
+  const { error } = await supabase.storage.from(BUCKET).upload(chemin, fichier, { contentType: fichier.type || undefined })
+  if (error) throw error
+  try {
+    return verifier(
+      await supabase.from('pieces_jointes')
+        .insert({ tache_id: tacheId, nom: fichier.name, chemin, taille: fichier.size, type_mime: fichier.type || null })
+        .select().single()
+    )
+  } catch (e) {
+    await supabase.storage.from(BUCKET).remove([chemin])
+    throw e
+  }
+}
+export async function lienPieceJointe(chemin, nom) {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(chemin, 300, { download: nom })
+  if (error) throw error
+  return data.signedUrl
+}
+export async function supprimerPieceJointe(pj) {
+  verifier(await supabase.from('pieces_jointes').delete().eq('id', pj.id))
+  await supabase.storage.from(BUCKET).remove([pj.chemin])
+}
+
+// ------------------------- Demandes de report --------------------------
+export async function chargerReports(tacheId) {
+  return verifier(await supabase.from('demandes_report').select('*').eq('tache_id', tacheId).order('cree_le', { ascending: false }))
+}
+
+export async function chargerReportsEnAttente() {
+  return verifier(
+    await supabase
+      .from('demandes_report')
+      .select('*, taches(id, numero, intitule, echeance)')
+      .eq('statut', 'en_attente')
+      .order('cree_le')
+  )
+}
+
+export async function demanderReport(tacheId, nouvelleEcheance, motif) {
+  return verifier(
+    await supabase.from('demandes_report').insert({ tache_id: tacheId, nouvelle_echeance: nouvelleEcheance, motif }).select().single()
+  )
+}
+
+export async function traiterReport(id, accepter, reponse) {
+  verifier(await supabase.rpc('traiter_report', { p_id: id, p_accepter: accepter, p_reponse: reponse || null }))
 }
 
 // ---------------------------- Notifications ----------------------------

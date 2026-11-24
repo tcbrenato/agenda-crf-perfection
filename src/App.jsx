@@ -18,6 +18,9 @@ import Calendrier from './pages/Calendrier'
 import MonCompte from './pages/MonCompte'
 import Import from './pages/Import'
 import Administration from './pages/Administration'
+import Projets from './pages/Projets'
+import Statistiques from './pages/Statistiques'
+import { estGestionnaire } from './lib/droits'
 
 function Routeur() {
   const { session, profil, chargement, erreurProfil, doitDefinirMotDePasse } = useAuth()
@@ -41,6 +44,8 @@ function Routeur() {
           <Route path="calendrier" element={<Calendrier />} />
           <Route path="compte" element={<MonCompte />} />
           <Route path="admin" element={admin ? <Administration /> : <Navigate to="/" replace />} />
+          <Route path="projets" element={estGestionnaire(profil) ? <Projets /> : <Navigate to="/" replace />} />
+          <Route path="statistiques" element={estGestionnaire(profil) ? <Statistiques /> : <Navigate to="/" replace />} />
           <Route path="compte/membres" element={<Navigate to="/admin?onglet=membres" replace />} />
           <Route path="compte/import" element={admin ? <Import /> : <Navigate to="/compte" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

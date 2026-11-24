@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ListeTaches from '../components/ListeTaches'
 import { SqueletteCartes } from '../components/Chargement'
@@ -10,7 +10,8 @@ import { estEchue, estTerminee, trierParEcheance } from '../lib/statuts'
 import { estGestionnaire } from '../lib/droits'
 import { useEstOrdinateur } from '../hooks/useMediaQuery'
 import { majuscule, prenom } from '../lib/texte'
-import { messageErreur } from '../lib/api'
+import { chargerReportsEnAttente, messageErreur } from '../lib/api'
+import { formaterDate as fd } from '../lib/dates'
 
 const CLE_PORTEE = 'agenda-crf-portee-accueil'
 
@@ -28,6 +29,11 @@ export default function Accueil() {
     }
   })
   const portee = gestionnaire ? porteeChoisie : 'tout'
+  const { profilsParId } = useDonnees()
+  const [reports, setReports] = useState([])
+  useEffect(() => {
+    if (gestionnaire) chargerReportsEnAttente().then(setReports).catch(() => setReports([]))
+  }, [gestionnaire, taches])
   const changerPortee = (p) => {
     setPortee(p)
     try { localStorage.setItem(CLE_PORTEE, p) } catch { /* stockage indisponible */ }
@@ -95,6 +101,27 @@ export default function Accueil() {
           <div className="compteur__libelle">Terminées</div>
         </Link>
       </section>
+
+      {reports.length > 0 && (
+        <section className="bloc-reports" aria-labelledby="titre-reports">
+          <h2 className="titre-section" id="titre-reports" style={{ marginTop: 4 }}>
+            Demandes de report à traiter <span className="compte">({reports.length})</span>
+          </h2>
+          <div className="pile" style={{ gap: 8 }}>
+            {reports.map((r) => (
+              <Link key={r.id} to={`/taches/${r.tache_id}`} className="ligne-report">
+                <span className="numero">N° {r.taches?.numero}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <strong>{r.taches?.intitule}</strong>
+                  <span className="texte-petit texte-doux" style={{ display: 'block' }}>
+                    {profilsParId[r.demandeur_id]?.nom_complet} : {fd(r.ancienne_echeance)} → {fd(r.nouvelle_echeance)} · {r.motif}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {chargement ? (
         <div style={{ marginTop: 24 }}><SqueletteCartes nombre={3} /></div>

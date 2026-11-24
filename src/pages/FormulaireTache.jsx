@@ -7,7 +7,7 @@ import { IconeRetour } from '../components/Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
-import { creerTache, messageErreur, modifierTache } from '../lib/api'
+import { ajouterCommentaire, creerTache, messageErreur, modifierTache } from '../lib/api'
 import { aujourdhui } from '../lib/dates'
 import { ORDRE_STATUTS, STATUTS } from '../lib/statuts'
 import { estGestionnaire, peutModifier } from '../lib/droits'
@@ -19,7 +19,7 @@ export default function FormulaireTache() {
   const naviguer = useNavigate()
   const toast = useToast()
   const { profil } = useAuth()
-  const { taches, profils, profilsAssignables, chargement, remplacerTache } = useDonnees()
+  const { taches, profils, profilsAssignables, projets, projetsActifs, chargement, remplacerTache } = useDonnees()
   const tache = edition ? taches.find((t) => t.id === id) : null
   const gestionnaire = estGestionnaire(profil)
 
@@ -38,6 +38,9 @@ export default function FormulaireTache() {
         date_creation: tache.date_creation,
         priorite: tache.priorite,
         statut: tache.statut,
+        projet_id: tache.projet_id || '',
+        recurrence: tache.recurrence || 'aucune',
+        motif: '',
         attribues: [...tache.attribues]
       })
     } else {
@@ -49,6 +52,9 @@ export default function FormulaireTache() {
         date_creation: aujourdhui(),
         priorite: b?.haute ? 'haute' : 'normale',
         statut: 'a_faire',
+        projet_id: b?.projet_id || '',
+        recurrence: 'aucune',
+        motif: '',
         attribues: b?.attribues || (gestionnaire ? [] : [profil.id])
       })
     }
@@ -67,6 +73,8 @@ export default function FormulaireTache() {
     if (!f.echeance) return setErreur("Choisissez l'échéance.")
     if (!f.attribues.length) return setErreur('Choisissez au moins un attributaire.')
     if (f.date_creation && f.echeance < f.date_creation) return setErreur("L'échéance ne peut pas précéder la date de la tâche.")
+    const devientBloquee = f.statut === 'bloque' && (!edition || tache.statut !== 'bloque')
+    if (devientBloquee && !f.motif.trim()) return setErreur('Indiquez le motif du blocage.')
     setErreur('')
     setEnvoi(true)
     const champs = {
@@ -76,11 +84,15 @@ export default function FormulaireTache() {
       priorite: f.priorite,
       statut: f.statut
     }
+    // champs de la migration 0007 : envoyés seulement s'ils sont utilisés (compatibilité)
+    if (f.projet_id || (edition && tache.projet_id)) champs.projet_id = f.projet_id || null
+    if (f.recurrence !== 'aucune' || (edition && tache.recurrence !== 'aucune')) champs.recurrence = f.recurrence
     if (gestionnaire && f.date_creation) champs.date_creation = f.date_creation
     try {
       const resultat = edition
         ? await modifierTache(id, champs, f.attribues, tache.attribues)
         : await creerTache(champs, f.attribues)
+      if (devientBloquee) await ajouterCommentaire(resultat.id, `🚫 Bloquée : ${f.motif.trim()}`)
       remplacerTache(resultat)
       toast.info(edition ? `Tâche N° ${resultat.numero} modifiée` : `Tâche N° ${resultat.numero} ajoutée`)
       naviguer(`/taches/${resultat.id}`, { replace: true })
@@ -130,6 +142,37 @@ export default function FormulaireTache() {
               <input id="date_creation" className="saisie" type="date" value={f.date_creation || ''} onChange={(e) => setF({ ...f, date_creation: e.target.value })} />
             </div>
           )}
+        </div>
+
+        {f.statut === 'bloque' && (!edition || tache.statut !== 'bloque') && (
+          <div className="champ">
+            <label htmlFor="motif">Motif du blocage *</label>
+            <textarea id="motif" className="saisie" value={f.motif} onChange={(e) => setF({ ...f, motif: e.target.value })} maxLength={500} placeholder="Ex. : en attente de la signature du fournisseur" />
+            <span className="aide">Ajouté en commentaire ; le DG est prévenu.</span>
+          </div>
+        )}
+
+        <div className="ligne" style={{ gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {(projets.length > 0 || gestionnaire) && (
+            <div className="champ" style={{ flex: '1 1 180px' }}>
+              <label htmlFor="projet">Projet</label>
+              <select id="projet" className="saisie" value={f.projet_id} onChange={(e) => setF({ ...f, projet_id: e.target.value })}>
+                <option value="">Aucun projet</option>
+                {[...projetsActifs, ...projets.filter((p) => p.archive && p.id === f.projet_id)].map((p) => (
+                  <option key={p.id} value={p.id}>{p.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="champ" style={{ flex: '1 1 180px' }}>
+            <label htmlFor="recurrence">Répéter</label>
+            <select id="recurrence" className="saisie" value={f.recurrence} onChange={(e) => setF({ ...f, recurrence: e.target.value })}>
+              <option value="aucune">Jamais</option>
+              <option value="hebdomadaire">Chaque semaine</option>
+              <option value="mensuelle">Chaque mois</option>
+            </select>
+            {f.recurrence !== 'aucune' && <span className="aide">Quand la tâche est terminée, la suivante est créée automatiquement.</span>}
+          </div>
         </div>
 
         <label className="interrupteur">

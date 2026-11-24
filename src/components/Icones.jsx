@@ -38,3 +38,5 @@ export const IconeDrapeau = (p) => <Icone {...p}><path d="M5 21V4M5 4h11l-2 4 2 
 export const IconeActualiser = (p) => <Icone {...p}><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></Icone>
 export const IconeFichier = (p) => <Icone {...p}><path d="M14 3H6v18h12V7l-4-4z" /><path d="M14 3v4h4M9 13h6M9 17h6" /></Icone>
 export const IconeCloche = (p) => <Icone {...p}><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" /><path d="M10 20a2 2 0 0 0 4 0" /></Icone>
+export const IconeDossier = (p) => <Icone {...p}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" /></Icone>
+export const IconeStats = (p) => <Icone {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></Icone>

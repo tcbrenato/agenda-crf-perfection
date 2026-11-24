@@ -83,7 +83,9 @@ agenda-crf-perfection/
 │  │  ├─ 0003_rappels.sql      Architecture des rappels (préparée, non planifiée)
 │  │  ├─ 0004_admin.sql        État des comptes pour la page Administration
 │  │  ├─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
-│  │  └─ 0006_visibilite_notifications.sql  Membres : leurs tâches uniquement ; notifications
+│  │  ├─ 0006_visibilite_notifications.sql  Membres : leurs tâches uniquement ; notifications
+│  │  ├─ 0007_ameliorations.sql Reports, projets, étapes, pièces jointes, récurrence, rappels
+│  │  └─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
 │     ├─ notifier-attribution/ Email à l'attributaire quand le DG ou l'admin lui confie une tâche
@@ -129,6 +131,8 @@ agenda-crf-perfection/
    4. `supabase/migrations/0004_admin.sql`
    5. `supabase/migrations/0005_roles.sql`
    6. `supabase/migrations/0006_visibilite_notifications.sql`
+   7. `supabase/migrations/0007_ameliorations.sql`
+   8. `supabase/migrations/0008_planification.sql` (après avoir déployé la fonction `rappels-echeances`, voir §11)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -325,26 +329,40 @@ Quand le **DG** ou un **administrateur** attribue une tâche à quelqu'un, à la
 
 ---
 
-## 11. Rappels (prévus, non activés)
+## 11. Rappels, récapitulatif et sauvegarde automatiques
 
-L'architecture est en place, mais **aucune notification n'est envoyée** pour l'instant :
+La fonction `rappels-echeances` est appelée **chaque matin à 8 h (heure de Porto-Novo)** :
 
-| Élément | Rôle |
-|---|---|
-| `0003_rappels.sql` | Tables `preferences_rappels`, `abonnements_push`, `journal_rappels`, et fonction `rappels_a_envoyer()` (échéance dans 48 h, tâche échue, une seule fois par personne) |
-| `functions/rappels-echeances` | Lit les rappels dus. Fonctionne en **simulation** tant que le secret `RAPPELS_ACTIFS` ne vaut pas `true`. |
-| `src/lib/notifications.js` | Abonnement Web Push de l'appareil (désactivé par `VITE_NOTIFICATIONS_ACTIVES=false`) |
-| `public/sw-rappels.js` | Affichage de la notification et ouverture de la tâche au toucher |
+| Quand | Quoi | Pour qui |
+|---|---|---|
+| Chaque jour | Rappel des tâches à rendre dans les 48 h et des tâches échues : un seul email par personne, plus une notification dans l'application | Chaque attributaire |
+| Le lundi | Récapitulatif de la semaine : en retard, à rendre cette semaine, terminées la semaine passée, demandes de report à traiter | Le(s) DG |
+| Le lundi | Sauvegarde complète des données (fichier JSON en pièce jointe) | Le(s) administrateur(s) |
 
-**Pour activer plus tard :**
+Un même rappel n'est jamais envoyé deux fois : la fonction peut être appelée plusieurs fois sans risque.
 
-1. Générer des clés VAPID : `npx web-push generate-vapid-keys`
-2. Secrets de la fonction : `npx supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUJET=mailto:contact@votre-domaine RAPPELS_ACTIFS=true`
-3. `npx supabase functions deploy rappels-echeances`
-4. Activer les extensions **pg_cron** et **pg_net**, enregistrer la clé `service_role` dans **Vault** sous le nom `service_role_key`, puis décommenter la planification en bas de `0003_rappels.sql` (tous les jours à 08:00, heure de Porto-Novo).
-5. Sur Vercel : `VITE_NOTIFICATIONS_ACTIVES=true` et `VITE_VAPID_PUBLIC_KEY=<clé publique>`, puis ajouter dans **Mon compte** un bouton qui appelle `activerRappelsSurCetAppareil()`.
+**Mise en place :**
+1. **Edge Functions** : ouvrez `rappels-echeances`, ou créez-la avec **Deploy a new function**, puis **Via Editor**. Collez `supabase/functions/rappels-echeances/index.ts`, puis **Deploy**.
+2. Dans les réglages de la fonction (**Details**), **désactivez « Verify JWT »**, puis enregistrez. La planification l'appelle sans session.
+3. Les secrets SMTP sont ceux de `notifier-attribution` (§11 bis) : rien à ajouter.
+4. **SQL Editor** : exécutez `supabase/migrations/0008_planification.sql`. La dernière ligne doit afficher la tâche `agenda-rappels-quotidiens`.
+5. Test immédiat : ouvrez `https://<projet>.supabase.co/functions/v1/rappels-echeances` dans un navigateur. La réponse indique combien de rappels ont été envoyés.
 
-Sur iPhone, les notifications web ne fonctionnent que si l'application est **installée sur l'écran d'accueil** (iOS 16.4 ou plus récent).
+---
+
+## 11 ter. Autres fonctions
+
+| Fonction | Qui | Où |
+|---|---|---|
+| **Motif obligatoire pour « Bloquée »** | Tous | Le motif est ajouté en commentaire, et le DG et le créateur sont prévenus |
+| **Le DG est prévenu** quand une tâche est terminée ou bloquée | Automatique | Cloche des notifications |
+| **Notification sur les commentaires** | Attributaires et créateur | Cloche des notifications |
+| **Demande de report d'échéance** | Un membre attributaire la demande ; le DG ou l'admin accepte ou refuse | Fiche de la tâche, accueil du DG (« Demandes de report à traiter ») |
+| **Projets** (catégories) | Le DG ou l'admin les crée ; tout le monde peut les choisir | Menu **Projets**, filtre dans **Tâches**, colonne dans les exports |
+| **Étapes (checklist)** | Le créateur, le DG ou l'admin les ajoutent ; les attributaires les cochent | Fiche de la tâche, avancement « ☑ 2/5 » sur les cartes |
+| **Pièces jointes** (10 Mo max, stockage privé) | Toute personne qui voit la tâche | Fiche de la tâche |
+| **Tâches récurrentes** (chaque semaine, chaque mois) | Formulaire, champ « Répéter » | Une fois la tâche terminée, la suivante est créée avec les mêmes attributaires et étapes |
+| **Statistiques** : terminées à temps, retard moyen, par personne, par mois, par projet | DG et admin | Menu **Statistiques** |
 
 ---
 
@@ -356,6 +374,8 @@ La sécurité est assurée **dans la base de données** (Row Level Security et t
 |---|---|---|---|
 | Page **Administration** (comptes, rôles, invitations, import, journal) | ✅ | ❌ | ❌ |
 | Voir les tâches | ✅ toutes | ✅ toutes | ✅ seulement les siennes (attribuées à lui ou créées par lui) |
+| Projets, statistiques | ✅ | ✅ | ❌ (choisit un projet existant) |
+| Accepter / refuser un report | ✅ | ✅ | ❌ (peut en demander un) |
 | Créer une tâche | ✅ | ✅ | ✅ (il en devient le créateur) |
 | Modifier une tâche (intitulé, échéance…) | ✅ toutes | ✅ toutes | ✅ seulement celles qu'il a créées |
 | Changer le statut | ✅ toutes | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import FeuilleBas from '../components/FeuilleBas'
-import { IconeGroupe, IconeCle, IconeSortie, IconeSuivant, IconeInstaller, IconeHorloge } from '../components/Icones'
+import { IconeGroupe, IconeDossier, IconeStats, IconeCle, IconeSortie, IconeSuivant, IconeInstaller, IconeHorloge } from '../components/Icones'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
 import { useInstallation } from '../hooks/useInstallation'
 import { messageErreur, modifierProfil } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { estAdmin } from '../lib/droits'
+import { estAdmin, estGestionnaire } from '../lib/droits'
 import { ROLES } from '../lib/statuts'
 import { initiales } from '../lib/texte'
 import { notificationsActives } from '../lib/notifications'
@@ -93,6 +93,16 @@ export default function MonCompte() {
         <button className="btn btn--primaire btn--bloc" type="submit" disabled={!modifie || envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
       </form>
 
+
+      {estGestionnaire(profil) && (
+        <>
+          <h2 className="titre-section">Pilotage</h2>
+          <nav className="carte liste-reglages" style={{ padding: '0 14px' }}>
+            <Link to="/statistiques"><IconeStats /> Statistiques de l'équipe <IconeSuivant className="chevron" /></Link>
+            <Link to="/projets"><IconeDossier /> Projets <IconeSuivant className="chevron" /></Link>
+          </nav>
+        </>
+      )}
 
       <h2 className="titre-section">Application</h2>
       <div className="carte liste-reglages" style={{ padding: '0 14px' }}>

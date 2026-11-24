@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { chargerProfils, chargerTaches } from '../lib/api'
+import { chargerProfils, chargerProjets, chargerTaches } from '../lib/api'
 import { aujourdhui } from '../lib/dates'
 
 const DonneesContext = createContext(null)
@@ -13,6 +13,7 @@ const INTERVALLE_MIN_RAFRAICHISSEMENT = 30_000
 export function DonneesProvider({ children }) {
   const [taches, setTaches] = useState([])
   const [profils, setProfils] = useState([])
+  const [projets, setProjets] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState(null)
   const [jour, setJour] = useState(aujourdhui())
@@ -21,9 +22,10 @@ export function DonneesProvider({ children }) {
   const recharger = useCallback(async () => {
     try {
       setErreur(null)
-      const [t, p] = await Promise.all([chargerTaches(), chargerProfils()])
+      const [t, p, pr] = await Promise.all([chargerTaches(), chargerProfils(), chargerProjets()])
       setTaches(t)
       setProfils(p)
+      setProjets(pr)
       dernierChargement.current = Date.now()
     } catch (e) {
       setErreur(e)
@@ -74,6 +76,10 @@ export function DonneesProvider({ children }) {
       // personnes à qui l'on peut confier une tâche (le compte d'administration en est exclu)
       profilsAssignables: profils.filter((p) => p.actif && p.role !== 'admin'),
       profilsParId,
+      projets,
+      projetsActifs: projets.filter((x) => !x.archive),
+      projetsParId: Object.fromEntries(projets.map((x) => [x.id, x])),
+      setProjets,
       chargement,
       erreur,
       jour,
@@ -83,7 +89,7 @@ export function DonneesProvider({ children }) {
       retirerTache,
       majProfil
     }
-  }, [taches, profils, chargement, erreur, jour, recharger, majTache, remplacerTache, retirerTache, majProfil])
+  }, [taches, profils, projets, chargement, erreur, jour, recharger, majTache, remplacerTache, retirerTache, majProfil])
 
   return <DonneesContext.Provider value={valeur}>{children}</DonneesContext.Provider>
 }
