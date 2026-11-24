@@ -6,7 +6,8 @@ import { delai, estEchue, estTerminee } from '../lib/statuts'
 import { formaterDate } from '../lib/dates'
 import { nomCourt } from '../lib/texte'
 import { peutChangerStatut } from '../lib/droits'
-import { confieePar } from '../lib/api'
+import { confieePar, receptionAConfirmer } from '../lib/api'
+import { useConfirmerReception } from '../hooks/useConfirmerReception'
 
 const SEUIL = 84 // px à glisser pour déclencher l'action
 
@@ -42,6 +43,8 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
   const echue = estEchue(tache, jour)
   const d = delai(tache, jour)
   const par = nomsConfieePar(tache, profilsParId)
+  const aConfirmer = receptionAConfirmer(profil, tache)
+  const { confirmer, enCours } = useConfirmerReception()
 
   const classes = ['carte-tache']
   if (echue) classes.push('carte-tache--echue')
@@ -132,6 +135,17 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
             </span>
           </div>
           {par && <div className="confiee-par" style={{ marginTop: 6 }}>Confiée par <strong>{par}</strong></div>}
+          {aConfirmer && (
+            <button
+              type="button"
+              className="btn btn--accent btn--petit btn--bloc bouton-recu"
+              disabled={enCours === tache.id}
+              onClick={(e) => { e.stopPropagation(); confirmer(tache) }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              ✓ J'ai bien reçu cette tâche
+            </button>
+          )}
           <div className="carte-tache__bas">
             <PastilleStatut statut={tache.statut} onClick={modifiable ? () => onMenu(tache) : undefined} />
             <span className={`delai ${d.classe}`}>{d.texte}</span>

@@ -85,10 +85,12 @@ agenda-crf-perfection/
 │  │  ├─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
 │  │  ├─ 0006_visibilite_notifications.sql  Membres : leurs tâches uniquement ; notifications
 │  │  ├─ 0007_ameliorations.sql Reports, projets, étapes, pièces jointes, récurrence, rappels
-│  │  └─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
+│  │  ├─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
+│  │  └─ 0009_emails_accuses.sql Emails de toutes les notifications, accusé de réception
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
-│     ├─ notifier-attribution/ Email à l'attributaire quand le DG ou l'admin lui confie une tâche
+│     ├─ notifier-attribution/ Bouton « Prévenir par email » (renvoi manuel)
+│     ├─ envoyer-notifications/ Envoi par email de chaque notification (automatique)
 │     └─ rappels-echeances/    Envoi des rappels (mode simulation tant que non activé)
 └─ src/
    ├─ main.jsx, App.jsx        Démarrage, routes, garde de connexion
@@ -133,6 +135,7 @@ agenda-crf-perfection/
    6. `supabase/migrations/0006_visibilite_notifications.sql`
    7. `supabase/migrations/0007_ameliorations.sql`
    8. `supabase/migrations/0008_planification.sql` (après avoir déployé la fonction `rappels-echeances`, voir §11)
+   9. `supabase/migrations/0009_emails_accuses.sql` (après 0008 ; puis déployer `envoyer-notifications`, voir §11 bis)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -300,7 +303,18 @@ Dans **Administration**, onglet **Données**, puis **Importer un fichier** (admi
 
 ---
 
-## 11 bis. Notifications à l'attribution d'une tâche
+## 11 bis. Notifications : dans l'application ET par email
+
+Chaque notification de la cloche part aussi par email, depuis `contact@crfperfection.pro` : tâche confiée, tâche terminée ou bloquée, commentaire, demande de report, réponse à un report, accusé de réception. L'envoi est déclenché par la base dès la création de la notification (fonction `envoyer-notifications`), avec une vérification toutes les 10 minutes en cas d'échec et 3 tentatives au maximum. Les rappels du matin restent groupés dans un seul email (§11).
+
+**Accusé de réception** : quand une tâche vous est confiée par quelqu'un d'autre, un bouton **« J'ai bien reçu »** apparaît sur l'accueil (« Nouvelles tâches à confirmer », avec « Tout confirmer »), sur la carte et sur la fiche. La personne qui a confié la tâche reçoit « X a bien reçu la tâche », dans la cloche et par email. Sur la fiche, chaque attributaire indique « ✓ Reçue le … » ou « En attente de confirmation de réception ».
+
+**Mise en place de l'envoi des emails :**
+1. **SQL Editor** : exécutez `0009_emails_accuses.sql` (après `0008`).
+2. **Edge Functions**, puis **Deploy a new function**, puis **Via Editor** : nom `envoyer-notifications`, collez `supabase/functions/envoyer-notifications/index.ts`, puis **Deploy**. Ensuite, dans **Details**, **désactivez « Verify JWT »**.
+3. Les secrets SMTP sont ceux ci-dessous (déjà en place si `notifier-attribution` fonctionne).
+
+### Historique : notifications à l'attribution d'une tâche
 
 **Dans l'application** : quand quelqu'un d'autre vous attribue une tâche, une notification apparaît sous la cloche (en haut sur téléphone, « Notifications » dans le menu sur ordinateur). Un message s'affiche aussi si l'application est ouverte. Ces notifications sont créées automatiquement par la base de données (migration 0006).
 

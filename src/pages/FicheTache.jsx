@@ -6,6 +6,7 @@ import ReportsTache from '../components/ReportsTache'
 import EtapesTache from '../components/EtapesTache'
 import PiecesJointesTache from '../components/PiecesJointesTache'
 import BadgesTache from '../components/BadgesTache'
+import { useConfirmerReception } from '../hooks/useConfirmerReception'
 import FeuilleBas from '../components/FeuilleBas'
 import { SqueletteCartes } from '../components/Chargement'
 import { IconeRetour, IconeCrayon, IconePoubelle, IconeEnvoyer, IconeTelephone, IconeCoche, IconeActualiser } from '../components/Icones'
@@ -14,7 +15,7 @@ import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
 import { useChangementStatut } from '../hooks/useChangementStatut'
 import {
-  ajouterCommentaire, chargerCommentaires, chargerHistorique, chargerTache, renvoyerNotification,
+  ajouterCommentaire, chargerCommentaires, chargerHistorique, chargerTache, renvoyerNotification, receptionAConfirmer,
   messageErreur, supprimerCommentaire, supprimerTache
 } from '../lib/api'
 import { formaterDate, formaterHorodatage } from '../lib/dates'
@@ -57,6 +58,7 @@ export default function FicheTache() {
   const [envoi, setEnvoi] = useState(false)
   const [confirmerSuppression, setConfirmerSuppression] = useState(false)
   const [envoiEmail, setEnvoiEmail] = useState(false)
+  const reception = useConfirmerReception()
 
   // Tâche absente de la liste en mémoire (ex. lien direct) : chargement à la demande
   useEffect(() => {
@@ -173,6 +175,15 @@ export default function FicheTache() {
             <div><dt>{terminee ? 'Terminée le' : 'Statut'}</dt><dd>{terminee ? formaterDate(tache.date_terminee) : STATUTS[tache.statut].libelle}</dd></div>
           </dl>
 
+          {receptionAConfirmer(profil, tache) && (
+            <div className="bandeau-recu">
+              <span>Cette tâche vous a été confiée. Confirmez que vous l'avez bien reçue.</span>
+              <button type="button" className="btn btn--accent btn--bloc" disabled={reception.enCours === tache.id} onClick={() => reception.confirmer(tache)}>
+                ✓ J'ai bien reçu cette tâche
+              </button>
+            </div>
+          )}
+
           {modifStatut && (
             <div className="ligne" style={{ marginTop: 14 }}>
               {terminee ? (
@@ -212,6 +223,11 @@ export default function FicheTache() {
                       <div className="confiee-par">
                         Confiée par <strong>{profilsParId[detail.attribue_par]?.nom_complet || 'un ancien membre'}</strong> le {formaterHorodatage(detail.attribue_le)}
                       </div>
+                    )}
+                    {parQuelquUnDautre && detail.recu_le !== undefined && (
+                      detail.recu_le
+                        ? <div className="confiee-par" style={{ color: 'var(--st-termine-texte)' }}>✓ Reçue le {formaterHorodatage(detail.recu_le)}</div>
+                        : <div className="confiee-par" style={{ color: '#8f4700' }}>En attente de confirmation de réception</div>
                     )}
                   </div>
                   {p.telephone && (

@@ -29,6 +29,8 @@ export function texteNotification(n, profilsParId) {
           ? `a accepté votre report au ${formaterDate(d.nouvelle_echeance)} pour la tâche`
           : `a refusé votre demande de report${d.reponse ? ` (« ${d.reponse} »)` : ''} pour la tâche`
       }
+    case 'accuse_reception':
+      return { auteur, action: 'a bien reçu la tâche' }
     default:
       return { auteur, action: 'a mis à jour la tâche' }
   }

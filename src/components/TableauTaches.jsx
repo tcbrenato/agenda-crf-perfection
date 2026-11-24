@@ -33,6 +33,14 @@ export default function TableauTaches({ taches, profilsParId, jour, profil, onOu
                   {t.intitule}
                   {t.priorite === 'haute' && !estTerminee(t) && <> <span className="badge-haute">Haute</span></>}
                   {par && <div className="confiee-par" style={{ fontWeight: 400 }}>Confiée par <strong>{par}</strong></div>}
+                  {(() => {
+                    const att = (t.attributionsDetail || []).filter((a) => a.recu_le === null && a.attribue_par && a.attribue_par !== a.profil_id)
+                    return att.length > 0 && (
+                      <div className="confiee-par" style={{ fontWeight: 400, color: '#8f4700' }}>
+                        Réception non confirmée : {att.map((a) => profilsParId[a.profil_id]?.nom_complet).filter(Boolean).join(', ')}
+                      </div>
+                    )
+                  })()}
                   <div className="ligne" style={{ gap: 10, flexWrap: 'wrap', fontWeight: 400 }}><BadgesTache tache={t} /></div>
                 </td>
                 <td>{formaterDate(t.date_creation)}</td>

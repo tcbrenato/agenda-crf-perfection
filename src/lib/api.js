@@ -41,7 +41,7 @@ export async function modifierProfil(id, champs) {
 }
 
 // ------------------------------- Tâches --------------------------------
-const SELECTION_TACHE = '*, attributions(profil_id, attribue_par, attribue_le), etapes(fait)'
+const SELECTION_TACHE = '*, attributions(profil_id, attribue_par, attribue_le, recu_le), etapes(fait)'
 // Sélection de secours si la migration 0007 (étapes) n'est pas encore appliquée
 const SELECTION_TACHE_BASE = '*, attributions(profil_id, attribue_par, attribue_le)'
 
@@ -57,7 +57,7 @@ function enrichir(t) {
     etapesFaites: etapes.filter((e) => e.fait).length,
     attribues: liste.map((a) => a.profil_id),
     // traçabilité : qui a attribué la tâche à qui, et quand
-    attributionsDetail: liste.map((a) => ({ profil_id: a.profil_id, attribue_par: a.attribue_par, attribue_le: a.attribue_le }))
+    attributionsDetail: liste.map((a) => ({ profil_id: a.profil_id, attribue_par: a.attribue_par, attribue_le: a.attribue_le, recu_le: a.recu_le }))
   }
 }
 
@@ -93,7 +93,7 @@ async function synchroniserAttributions(tacheId, nouveaux, anciens = []) {
   }
   if (aAjouter.length) {
     verifier(await supabase.from('attributions').insert(aAjouter.map((profil_id) => ({ tache_id: tacheId, profil_id }))))
-    notifierAttribution(tacheId, aAjouter)
+    // L'email de la nouvelle attribution est envoyé automatiquement par la base (migration 0009)
   }
 }
 
@@ -172,6 +172,18 @@ export async function supprimerCommentaire(id) {
 
 export async function chargerHistorique(tacheId) {
   return verifier(await supabase.from('historique').select('*').eq('tache_id', tacheId).order('date', { ascending: false }))
+}
+
+// --------------------------- Accusé de réception ---------------------------
+/** L'attributaire confirme avoir bien reçu la tâche ; la personne qui l'a confiée est prévenue. */
+export async function confirmerReception(tacheId) {
+  return verifier(await supabase.rpc('confirmer_reception', { p_tache: tacheId }))
+}
+
+/** Vrai si la tâche a été confiée à `profil` par quelqu'un d'autre et qu'il n'a pas encore confirmé. */
+export function receptionAConfirmer(profil, tache) {
+  const a = (tache.attributionsDetail || []).find((x) => x.profil_id === profil?.id)
+  return Boolean(a && a.recu_le === null && a.attribue_par && a.attribue_par !== profil.id)
 }
 
 // -------------------------------- Projets --------------------------------

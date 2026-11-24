@@ -1,8 +1,7 @@
 -- =================================================================
 --  AGENDA CRF PERFECTION — INSTALLATION COMPLÈTE (à coller en une fois)
---  Supabase > SQL Editor > New query > coller > Run
 --  Contient : migrations 0001 à 0007
---  (0008_planification.sql s'exécute à part, après le déploiement de la fonction rappels-echeances)
+--  Ensuite, à part et dans l'ordre : 0008_planification.sql puis 0009_emails_accuses.sql
 -- =================================================================
 
 

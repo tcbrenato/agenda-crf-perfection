@@ -512,6 +512,9 @@ button.statut::after { content: '▾'; font-size: 0.7rem; opacity: 0.7; margin-l
 }
 .segment button[aria-pressed='true'] { background: var(--blanc); color: var(--bleu-nuit); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
+.bloc-recu { margin-top: 20px; border: 1px solid #e9c9cc; background: #fcf4f5; border-radius: var(--rayon); padding: 12px; }
+.bandeau-recu { margin-top: 14px; padding: 12px; border-radius: var(--rayon); background: #fcf4f5; border: 1px solid #e9c9cc; display: flex; flex-direction: column; gap: 10px; font-weight: 600; font-size: 0.9375rem; }
+.bouton-recu { margin-top: 10px; }
 .bloc-reports { margin-top: 20px; border: 1px solid #f3d6a8; background: #fff8ec; border-radius: var(--rayon); padding: 12px; }
 .ligne-report { display: flex; gap: 10px; align-items: flex-start; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid var(--bordure); text-decoration: none; }
 .ligne-report:hover { border-color: var(--bordure-forte); }

@@ -10,7 +10,8 @@ import { estEchue, estTerminee, trierParEcheance } from '../lib/statuts'
 import { estGestionnaire } from '../lib/droits'
 import { useEstOrdinateur } from '../hooks/useMediaQuery'
 import { majuscule, prenom } from '../lib/texte'
-import { chargerReportsEnAttente, messageErreur } from '../lib/api'
+import { chargerReportsEnAttente, messageErreur, receptionAConfirmer } from '../lib/api'
+import { useConfirmerReception } from '../hooks/useConfirmerReception'
 import { formaterDate as fd } from '../lib/dates'
 
 const CLE_PORTEE = 'agenda-crf-portee-accueil'
@@ -31,6 +32,8 @@ export default function Accueil() {
   const portee = gestionnaire ? porteeChoisie : 'tout'
   const { profilsParId } = useDonnees()
   const [reports, setReports] = useState([])
+  const reception = useConfirmerReception()
+  const aConfirmer = taches.filter((t) => receptionAConfirmer(profil, t))
   useEffect(() => {
     if (gestionnaire) chargerReportsEnAttente().then(setReports).catch(() => setReports([]))
   }, [gestionnaire, taches])
@@ -101,6 +104,25 @@ export default function Accueil() {
           <div className="compteur__libelle">Terminées</div>
         </Link>
       </section>
+
+      {aConfirmer.length > 0 && (
+        <section className="bloc-recu" aria-labelledby="titre-recu">
+          <div className="ligne ligne--espace" style={{ flexWrap: 'wrap', gap: 8 }}>
+            <h2 className="titre-section" id="titre-recu" style={{ margin: 0 }}>
+              Nouvelles tâches à confirmer <span className="compte">({aConfirmer.length})</span>
+            </h2>
+            {aConfirmer.length > 1 && (
+              <button type="button" className="btn btn--accent btn--petit" disabled={Boolean(reception.enCours)} onClick={() => reception.confirmer(aConfirmer)}>
+                ✓ Tout confirmer
+              </button>
+            )}
+          </div>
+          <p className="texte-petit texte-doux" style={{ margin: '4px 0 10px' }}>
+            Ces tâches vous ont été confiées. Confirmez que vous les avez bien reçues : la personne qui les a confiées sera prévenue.
+          </p>
+          <ListeTaches taches={aConfirmer} />
+        </section>
+      )}
 
       {reports.length > 0 && (
         <section className="bloc-reports" aria-labelledby="titre-reports">
