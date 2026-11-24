@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import FeuilleBas from '../components/FeuilleBas'
 import { IconeGroupe, IconeDossier, IconeStats, IconeCle, IconeSortie, IconeSuivant, IconeInstaller, IconeHorloge } from '../components/Icones'
@@ -10,7 +10,8 @@ import { messageErreur, modifierProfil } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { estAdmin, estGestionnaire } from '../lib/droits'
 import { ROLES } from '../lib/statuts'
-import { initiales } from '../lib/texte'
+import Avatar from '../components/Avatar'
+import { changerPhoto, retirerPhoto } from '../lib/api'
 import { notificationsActives } from '../lib/notifications'
 
 export default function MonCompte() {
@@ -23,6 +24,36 @@ export default function MonCompte() {
   const [mdpOuvert, setMdpOuvert] = useState(false)
   const [aideIOS, setAideIOS] = useState(false)
   const [mdp, setMdp] = useState({ nouveau: '', confirmation: '', erreur: '' })
+  const champPhoto = useRef(null)
+  const [envoiPhoto, setEnvoiPhoto] = useState(false)
+  const photoAutorisee = profil.role !== 'dg' // cahier des charges : aucune photo du DG à l'écran
+
+  const choisirPhoto = async (e) => {
+    const fichier = e.target.files?.[0]
+    e.target.value = ''
+    if (!fichier) return
+    setEnvoiPhoto(true)
+    try {
+      const p = await changerPhoto(profil.id, fichier)
+      setProfil(p)
+      majProfil(p)
+      toast.info('Photo de profil mise à jour')
+    } catch (err) {
+      toast.erreur(messageErreur(err))
+    } finally {
+      setEnvoiPhoto(false)
+    }
+  }
+
+  const enleverPhoto = async () => {
+    try {
+      const p = await retirerPhoto(profil.id)
+      setProfil(p)
+      majProfil(p)
+    } catch (err) {
+      toast.erreur(messageErreur(err))
+    }
+  }
 
   const modifie = f.nom_complet !== profil.nom_complet || f.poste !== (profil.poste || '') || f.telephone !== (profil.telephone || '')
 
@@ -62,11 +93,31 @@ export default function MonCompte() {
       <h1 className="titre-page" style={{ marginBottom: 16 }}>Mon compte</h1>
 
       <div className="carte carte--padding ligne" style={{ gap: 14, marginBottom: 16 }}>
-        <span className="avatar avatar--grand">{initiales(profil.nom_complet)}</span>
+        <div className="photo-profil">
+          <Avatar profil={profil} taille="grand" />
+          {photoAutorisee && (
+            <>
+              <input ref={champPhoto} type="file" accept="image/*" hidden onChange={choisirPhoto} />
+              <button type="button" className="photo-profil__bouton" onClick={() => champPhoto.current.click()} disabled={envoiPhoto} aria-label="Changer ma photo de profil">
+                📷
+              </button>
+            </>
+          )}
+        </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: '1.0625rem' }}>{profil.nom_complet}</div>
           <div className="texte-doux texte-petit" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{utilisateur?.email}</div>
           <span className={`etiquette-role etiquette-role--${profil.role}`} style={{ marginTop: 4 }}>{ROLES[profil.role]}</span>
+          {photoAutorisee && (
+            <div className="ligne" style={{ gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn--fantome" style={{ minHeight: 34, padding: '0 6px', fontSize: '0.875rem' }} onClick={() => champPhoto.current.click()} disabled={envoiPhoto}>
+                {envoiPhoto ? 'Envoi…' : profil.photo_url ? 'Changer ma photo' : 'Ajouter une photo'}
+              </button>
+              {profil.photo_url && (
+                <button type="button" className="btn btn--fantome" style={{ minHeight: 34, padding: '0 6px', fontSize: '0.875rem', color: 'var(--texte-doux)' }} onClick={enleverPhoto}>Retirer</button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

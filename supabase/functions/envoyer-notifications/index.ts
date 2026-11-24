@@ -63,8 +63,8 @@ function contenu(n: Notif) {
       }
     case 'statut':
       return d.statut === 'bloque'
-        ? { sujet: `Tâche bloquée : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a signalé un <strong style="color:#8F4700">blocage</strong> sur cette tâche. Le motif figure dans les commentaires.`, bouton: 'Voir le motif', accent: '#E08A1E', lignes: [['Échéance', jj(n.echeance)]] }
-        : { sujet: `Tâche terminée : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a marqué cette tâche comme <strong style="color:#1C6A40">terminée</strong>.`, bouton: 'Voir la tâche', accent: '#1C6A40', lignes: [['Échéance', jj(n.echeance)]] }
+        ? { sujet: `Tâche bloquée : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a signalé un <strong style="color:#8F4700">blocage</strong> sur cette tâche.`, citation: d.note ? String(d.note).replace(/^🚫 Bloquée : /, '') : undefined, bouton: 'Voir la tâche', accent: '#E08A1E', lignes: [['Échéance', jj(n.echeance)]] }
+        : { sujet: `Tâche terminée : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a marqué cette tâche comme <strong style="color:#1C6A40">terminée</strong>${d.note ? ' :' : '.'}`, citation: d.note ? String(d.note).replace(/^✅ Terminée : /, '') : undefined, bouton: String(d.note ?? '').includes('📎') ? 'Voir la tâche et le fichier' : 'Voir la tâche', accent: '#1C6A40', lignes: [['Échéance', jj(n.echeance)]] }
     case 'commentaire':
       return { sujet: `Nouveau commentaire : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a commenté cette tâche :`, citation: String(d.extrait ?? ''), bouton: 'Répondre', accent: '#1B2A41', lignes: [] }
     case 'report_demande':

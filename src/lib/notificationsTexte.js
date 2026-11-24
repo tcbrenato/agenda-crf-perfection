@@ -12,8 +12,8 @@ export function texteNotification(n, profilsParId) {
       return { auteur, action: 'vous a confié la tâche' }
     case 'statut':
       return d.statut === 'bloque'
-        ? { auteur, action: 'a signalé un blocage sur la tâche' }
-        : { auteur, action: 'a terminé la tâche' }
+        ? { auteur, action: `a signalé un blocage${d.note ? ` (« ${d.note.replace(/^🚫 Bloquée : /, '')} »)` : ''} sur la tâche` }
+        : { auteur, action: `a terminé${d.note ? ` (« ${d.note.replace(/^✅ Terminée : /, '').split('\n')[0]} »)` : ''} la tâche` }
     case 'commentaire':
       return { auteur, action: `a commenté « ${d.extrait || ''} » sur la tâche` }
     case 'rappel_48h':

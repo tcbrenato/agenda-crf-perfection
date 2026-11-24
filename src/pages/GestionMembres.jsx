@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext'
 import { adminMembres, chargerEtatComptes, messageErreur, modifierProfil } from '../lib/api'
 import { formaterHorodatage } from '../lib/dates'
 import { ROLES } from '../lib/statuts'
-import { initiales } from '../lib/texte'
+import Avatar from '../components/Avatar'
 
 const VIDE = { email: '', nom_complet: '', role: 'membre', poste: '', telephone: '' }
 
@@ -135,7 +135,7 @@ export default function GestionMembres({ integre = false }) {
           const moi = p.id === profil.id
           return (
             <div key={p.id} className={`membre ${p.actif ? '' : 'membre--inactif'}`}>
-              <span className="avatar">{initiales(p.nom_complet)}</span>
+              <Avatar profil={p} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 650 }}>{p.nom_complet}{moi && ' (vous)'}</div>
                 <div className="texte-doux texte-petit" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.poste || '—'} · {p.email}</div>

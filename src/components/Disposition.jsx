@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import AjoutRapide from './AjoutRapide'
 import Notifications from './Notifications'
-import { IconeAccueil, IconeCalendrier, IconeCompte, IconeDossier, IconeGroupe, IconePlus, IconeStats, IconeTaches } from './Icones'
+import { IconeAccueil, IconeCalendrier, IconeCompte, IconeDossier, IconeGroupe, IconeMessage, IconePlus, IconeStats, IconeTaches } from './Icones'
+import Avatar from './Avatar'
+import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
@@ -16,6 +18,7 @@ const LIENS = [
   { vers: '/', libelle: 'Accueil', Icone: IconeAccueil, fin: true },
   { vers: '/taches', libelle: 'Tâches', Icone: IconeTaches },
   { vers: '/calendrier', libelle: 'Calendrier', Icone: IconeCalendrier },
+  { vers: '/messages', libelle: 'Messages', Icone: IconeMessage },
   { vers: '/compte', libelle: 'Mon compte', Icone: IconeCompte }
 ]
 
@@ -41,7 +44,12 @@ export default function Disposition() {
   })
 
   const nbEchues = taches.filter((t) => estEchue(t, jour)).length
-  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin') || pathname.startsWith('/statistiques')
+  const { nonLus: messagesNonLus, disponible: chatDisponible } = useChat()
+  const liens = LIENS.filter((l) => l.vers !== '/messages' || chatDisponible)
+  const pastilleMessages = messagesNonLus > 0 && (
+    <span className="pastille-nombre pastille-nombre--bleu" aria-label={`${messagesNonLus} messages non lus`}>{messagesNonLus > 99 ? '99+' : messagesNonLus}</span>
+  )
+  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin') || pathname.startsWith('/statistiques') || pathname.startsWith('/messages')
   const admin = estAdmin(profil)
 
   const pastilleEchues = nbEchues > 0 && (
@@ -62,10 +70,11 @@ export default function Disposition() {
         </button>
 
         <nav className="barre-laterale__nav">
-          {LIENS.map(({ vers, libelle, Icone, fin }) => (
+          {liens.map(({ vers, libelle, Icone, fin }) => (
             <NavLink key={vers} to={vers} end={fin} className="lien-lateral">
               <Icone /> {libelle}
               {vers === '/taches' && pastilleEchues}
+              {vers === '/messages' && pastilleMessages}
             </NavLink>
           ))}
           {estGestionnaire(profil) && (
@@ -83,7 +92,7 @@ export default function Disposition() {
         </nav>
 
         <NavLink to="/compte" className="barre-laterale__profil">
-          <span className="avatar">{initiales(profil?.nom_complet)}</span>
+          <Avatar profil={profil} />
           <span style={{ minWidth: 0 }}>
             <strong>{profil?.nom_complet}</strong>
             <small>{ROLES[profil?.role]}</small>
@@ -101,8 +110,8 @@ export default function Disposition() {
           </div>
           <div className="entete__droite">
             <Notifications notifications={notifications} />
-            <NavLink to="/compte" className="avatar" title={`${profil?.nom_complet} — ${ROLES[profil?.role] || ''}`} aria-label="Mon compte" style={{ textDecoration: 'none' }}>
-              {initiales(profil?.nom_complet)}
+            <NavLink to="/compte" title={`${profil?.nom_complet} — ${ROLES[profil?.role] || ''}`} aria-label="Mon compte" style={{ textDecoration: 'none', display: 'flex' }}>
+              <Avatar profil={profil} />
             </NavLink>
           </div>
         </div>
@@ -120,11 +129,12 @@ export default function Disposition() {
 
       {/* ---------- Téléphone : barre du bas ---------- */}
       <nav className="nav-basse" aria-label="Navigation">
-        {LIENS.map(({ vers, libelle, Icone, fin }) => (
+        {liens.map(({ vers, libelle, Icone, fin }) => (
           <NavLink key={vers} to={vers} end={fin}>
             <Icone />
-            {libelle}
+            {libelle === 'Mon compte' && liens.length > 4 ? 'Compte' : libelle}
             {vers === '/taches' && pastilleEchues}
+            {vers === '/messages' && pastilleMessages}
           </NavLink>
         ))}
       </nav>

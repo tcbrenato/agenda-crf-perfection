@@ -1,4 +1,5 @@
-import { initiales, nomCourt } from '../lib/texte'
+import { nomCourt } from '../lib/texte'
+import Avatar from './Avatar'
 
 /** Choix multiple d'attributaires sous forme de puces tactiles. */
 export default function SelecteurPersonnes({ profils, selection, onChange, moiId }) {
@@ -20,7 +21,7 @@ export default function SelecteurPersonnes({ profils, selection, onChange, moiId
           onClick={() => basculer(p.id)}
           title={p.nom_complet}
         >
-          <span className="avatar">{initiales(p.nom_complet)}</span>
+          <Avatar profil={p} />
           {p.id === moiId ? 'Moi' : nomCourt(p.nom_complet)}
         </button>
       ))}

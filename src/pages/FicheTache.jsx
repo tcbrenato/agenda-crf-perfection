@@ -21,7 +21,7 @@ import {
 import { formaterDate, formaterHorodatage } from '../lib/dates'
 import { STATUTS, delai, estEchue, estTerminee, ROLES } from '../lib/statuts'
 import { estGestionnaire, peutChangerStatut, peutCommenter, peutModifier, peutSupprimer } from '../lib/droits'
-import { initiales } from '../lib/texte'
+import Avatar from '../components/Avatar'
 
 function texteHistorique(h, profilsParId) {
   switch (h.champ) {
@@ -44,7 +44,7 @@ export default function FicheTache() {
   const toast = useToast()
   const { profil } = useAuth()
   const { taches, profilsParId, jour, chargement, remplacerTache, retirerTache } = useDonnees()
-  const { appliquer, tacheMenu, ouvrirMenu, fermerMenu } = useChangementStatut()
+  const { appliquer, tacheMenu, etapeMenu, ouvrirMenu, fermerMenu } = useChangementStatut()
 
   const tacheEnMemoire = taches.find((t) => t.id === id)
   const [tacheDistante, setTacheDistante] = useState(null)
@@ -59,6 +59,7 @@ export default function FicheTache() {
   const [confirmerSuppression, setConfirmerSuppression] = useState(false)
   const [envoiEmail, setEnvoiEmail] = useState(false)
   const reception = useConfirmerReception()
+  const [pjVersion, setPjVersion] = useState(0) // recharge les pièces jointes et commentaires après une clôture
 
   // Tâche absente de la liste en mémoire (ex. lien direct) : chargement à la demande
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function FicheTache() {
 
   useEffect(() => {
     chargerCommentaires(id).then(setCommentaires).catch(() => setCommentaires([]))
-  }, [id])
+  }, [id, tache?.statut])
 
   // l'historique est rechargé à chaque changement de la tâche (statut, échéance…)
   const signature = tache ? `${tache.statut}|${tache.echeance}|${tache.attribues.join(',')}` : ''
@@ -189,7 +190,7 @@ export default function FicheTache() {
               {terminee ? (
                 <button className="btn btn--secondaire btn--bloc" onClick={() => appliquer(tache, 'en_cours')}><IconeActualiser /> Rouvrir la tâche</button>
               ) : (
-                <button className="btn btn--primaire btn--bloc" onClick={() => appliquer(tache, 'termine')}><IconeCoche /> Marquer terminée</button>
+                <button className="btn btn--primaire btn--bloc" onClick={() => ouvrirMenu(tache, 'termine')}><IconeCoche /> Marquer terminée</button>
               )}
             </div>
           )}
@@ -215,7 +216,7 @@ export default function FicheTache() {
               const parQuelquUnDautre = detail?.attribue_par && detail.attribue_par !== pid
               return (
                 <div key={pid} className="personne">
-                  <span className="avatar">{initiales(p.nom_complet)}</span>
+                  <Avatar profil={p} />
                   <div style={{ minWidth: 0 }}>
                     <div className="personne__nom">{p.nom_complet}{!p.actif && ' (inactif)'}</div>
                     <div className="personne__poste">{p.poste || ROLES[p.role]}</div>
@@ -249,7 +250,7 @@ export default function FicheTache() {
             </div>
           )}
 
-          <PiecesJointesTache tache={tache} />
+          <PiecesJointesTache key={pjVersion} tache={tache} />
 
           {(peutModifier(profil, tache) || peutSupprimer(profil)) && (
             <div className="ligne" style={{ marginTop: 16, gap: 10 }}>
@@ -315,7 +316,7 @@ export default function FicheTache() {
         </div>
       </div>
 
-      <MenuStatut tache={tacheMenu && tache} onChoisir={appliquer} onFermer={fermerMenu} />
+      <MenuStatut tache={tacheMenu && tache} etape={etapeMenu} onChoisir={async (...a) => { await appliquer(...a); setPjVersion((v) => v + 1) }} onFermer={fermerMenu} />
 
       <FeuilleBas ouvert={confirmerSuppression} titre="Supprimer la tâche ?" onFermer={() => setConfirmerSuppression(false)}>
         <p style={{ marginBottom: 16 }}>

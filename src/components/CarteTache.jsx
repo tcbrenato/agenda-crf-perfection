@@ -85,7 +85,8 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
     setDecalage(0)
     if (valeur >= SEUIL) {
       if (navigator.vibrate) navigator.vibrate(15)
-      onStatut(tache, terminee ? 'en_cours' : 'termine')
+      if (terminee) onStatut(tache, 'en_cours')
+      else onMenu(tache, 'termine') // compte rendu + fichier corrigé (facultatifs)
     } else if (valeur <= -SEUIL) {
       onMenu(tache)
     }

@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { DonneesProvider } from './context/DonneesContext'
+import { ChatProvider } from './context/ChatContext'
+import Messages from './pages/Messages'
 import { ToastProvider } from './context/ToastContext'
 import { configurationOk } from './lib/supabase'
 import { estAdmin } from './lib/droits'
@@ -34,6 +36,7 @@ function Routeur() {
   const admin = estAdmin(profil)
   return (
     <DonneesProvider>
+      <ChatProvider>
       <Routes>
         <Route element={<Disposition />}>
           <Route index element={<Accueil />} />
@@ -42,6 +45,8 @@ function Routeur() {
           <Route path="taches/:id" element={<FicheTache />} />
           <Route path="taches/:id/modifier" element={<FormulaireTache />} />
           <Route path="calendrier" element={<Calendrier />} />
+          <Route path="messages" element={<Messages />} />
+          <Route path="messages/:id" element={<Messages />} />
           <Route path="compte" element={<MonCompte />} />
           <Route path="admin" element={admin ? <Administration /> : <Navigate to="/" replace />} />
           <Route path="projets" element={estGestionnaire(profil) ? <Projets /> : <Navigate to="/" replace />} />
@@ -51,6 +56,7 @@ function Routeur() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      </ChatProvider>
     </DonneesProvider>
   )
 }

@@ -86,7 +86,8 @@ agenda-crf-perfection/
 │  │  ├─ 0006_visibilite_notifications.sql  Membres : leurs tâches uniquement ; notifications
 │  │  ├─ 0007_ameliorations.sql Reports, projets, étapes, pièces jointes, récurrence, rappels
 │  │  ├─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
-│  │  └─ 0009_emails_accuses.sql Emails de toutes les notifications, accusé de réception
+│  │  ├─ 0009_emails_accuses.sql Emails de toutes les notifications, accusé de réception
+│  │  └─ 0010_chat_photos_cloture.sql Messagerie, photos de profil, compte rendu de clôture
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
 │     ├─ notifier-attribution/ Bouton « Prévenir par email » (renvoi manuel)
@@ -136,6 +137,7 @@ agenda-crf-perfection/
    7. `supabase/migrations/0007_ameliorations.sql`
    8. `supabase/migrations/0008_planification.sql` (après avoir déployé la fonction `rappels-echeances`, voir §11)
    9. `supabase/migrations/0009_emails_accuses.sql` (après 0008 ; puis déployer `envoyer-notifications`, voir §11 bis)
+   10. `supabase/migrations/0010_chat_photos_cloture.sql` (messagerie, photos de profil, compte rendu de clôture)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -363,6 +365,14 @@ Un même rappel n'est jamais envoyé deux fois : la fonction peut être appelée
 5. Test immédiat : ouvrez `https://<projet>.supabase.co/functions/v1/rappels-echeances` dans un navigateur. La réponse indique combien de rappels ont été envoyés.
 
 ---
+
+## 11 quater. Messagerie, photos de profil, clôture avec fichier
+
+- **Messages** (onglet du menu) : discussion **Général** pour toute l'équipe, et **conversations privées** à deux (« Nouveau »). Les messages arrivent en direct (Supabase Realtime) et le nombre de non-lus s'affiche dans le menu. Pour supprimer un de ses messages : double-clic, ou double appui, sur la bulle. Les messages ne déclenchent pas d'email.
+- **Photo de profil** : dans **Mon compte**, « Ajouter une photo ». L'image est recadrée en carré de 256 px (environ 25 Ko) et remplace les initiales partout. Conformément au cahier des charges, **aucune photo du DG n'est affichée** : l'option n'est pas proposée sur son compte (voir `src/components/Avatar.jsx` pour changer cette règle).
+- **Terminer une tâche** (bouton, menu de statut ou glissement vers la droite) : une étape propose un **compte rendu** et le **fichier corrigé ou livrable**, tous deux facultatifs. Le fichier rejoint les pièces jointes de la tâche ; le DG, le créateur et la personne qui a confié la tâche sont prévenus, et l'email contient le compte rendu.
+
+**Mise en place :** exécutez `0010_chat_photos_cloture.sql`, puis redéployez `envoyer-notifications` (nouvelle version qui inclut le compte rendu).
 
 ## 11 ter. Autres fonctions
 

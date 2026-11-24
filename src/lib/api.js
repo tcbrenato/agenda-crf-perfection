@@ -174,6 +174,55 @@ export async function chargerHistorique(tacheId) {
   return verifier(await supabase.from('historique').select('*').eq('tache_id', tacheId).order('date', { ascending: false }))
 }
 
+// --------------------------------- Chat ---------------------------------
+export async function chargerConversations() {
+  const { data, error } = await supabase.rpc('resume_conversations')
+  if (error) throw error
+  return data
+}
+export async function chargerMessages(conversationId, limite = 150) {
+  const data = verifier(
+    await supabase.from('messages').select('*').eq('conversation_id', conversationId)
+      .order('cree_le', { ascending: false }).limit(limite)
+  )
+  return data.reverse()
+}
+export async function envoyerMessage(conversationId, texte) {
+  return verifier(await supabase.from('messages').insert({ conversation_id: conversationId, texte }).select().single())
+}
+export async function supprimerMessage(id) {
+  verifier(await supabase.from('messages').delete().eq('id', id))
+}
+export async function ouvrirConversation(autreId) {
+  return verifier(await supabase.rpc('ouvrir_conversation', { p_autre: autreId }))
+}
+export async function marquerConversationLue(conversationId) {
+  await supabase.rpc('marquer_conversation_lue', { p_conversation: conversationId })
+}
+
+// ----------------------------- Photo de profil -----------------------------
+/** Recadre la photo en carré 256 px (JPEG ~25 Ko) avant l'envoi : léger pour les connexions faibles. */
+async function preparerPhoto(fichier) {
+  const image = await createImageBitmap(fichier)
+  const cote = Math.min(image.width, image.height)
+  const toile = document.createElement('canvas')
+  toile.width = toile.height = 256
+  toile.getContext('2d').drawImage(image, (image.width - cote) / 2, (image.height - cote) / 2, cote, cote, 0, 0, 256, 256)
+  return await new Promise((ok) => toile.toBlob(ok, 'image/jpeg', 0.82))
+}
+export async function changerPhoto(profilId, fichier) {
+  if (!fichier.type.startsWith('image/')) throw new Error('Choisissez une image (JPEG ou PNG).')
+  const blob = await preparerPhoto(fichier)
+  const chemin = `${profilId}/${Date.now()}.jpg`
+  const { error } = await supabase.storage.from('avatars').upload(chemin, blob, { contentType: 'image/jpeg', upsert: true })
+  if (error) throw error
+  const { data } = supabase.storage.from('avatars').getPublicUrl(chemin)
+  return modifierProfil(profilId, { photo_url: data.publicUrl })
+}
+export async function retirerPhoto(profilId) {
+  return modifierProfil(profilId, { photo_url: null })
+}
+
 // --------------------------- Accusé de réception ---------------------------
 /** L'attributaire confirme avoir bien reçu la tâche ; la personne qui l'a confiée est prévenue. */
 export async function confirmerReception(tacheId) {

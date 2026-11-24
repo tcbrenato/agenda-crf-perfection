@@ -13,7 +13,7 @@ export default function ListeTaches({ taches, tableau = false, vide = 'Aucune t√
   const { profilsParId, jour } = useDonnees()
   const naviguer = useNavigate()
   const ordinateur = useEstOrdinateur()
-  const { appliquer, tacheMenu, ouvrirMenu, fermerMenu } = useChangementStatut()
+  const { appliquer, tacheMenu, etapeMenu, ouvrirMenu, fermerMenu } = useChangementStatut()
 
   const ouvrir = (t) => naviguer(`/taches/${t.id}`)
   // la t√¢che du menu est relue depuis la liste (statut √† jour)
@@ -41,7 +41,7 @@ export default function ListeTaches({ taches, tableau = false, vide = 'Aucune t√
           ))}
         </div>
       )}
-      <MenuStatut tache={tacheMenuAJour} onChoisir={appliquer} onFermer={fermerMenu} />
+      <MenuStatut tache={tacheMenuAJour} etape={etapeMenu} onChoisir={appliquer} onFermer={fermerMenu} />
     </>
   )
 }
