@@ -5,8 +5,18 @@ import { delai, estEchue, estTerminee } from '../lib/statuts'
 import { formaterDate } from '../lib/dates'
 import { nomCourt } from '../lib/texte'
 import { peutChangerStatut } from '../lib/droits'
+import { confieePar } from '../lib/api'
 
 const SEUIL = 84 // px à glisser pour déclencher l'action
+
+/** « OLOUTAYO ODAH » ou « OLOUTAYO O., Awa H. » : qui a confié la tâche (vide si attribuée à soi-même). */
+export function nomsConfieePar(tache, profilsParId, court = true) {
+  return confieePar(tache)
+    .map((id) => profilsParId[id]?.nom_complet)
+    .filter(Boolean)
+    .map((n) => (court ? nomCourt(n) : n))
+    .join(', ')
+}
 
 export function nomsAttribues(tache, profilsParId, court = true) {
   const noms = (tache.attribues || [])
@@ -30,6 +40,7 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
   const terminee = estTerminee(tache)
   const echue = estEchue(tache, jour)
   const d = delai(tache, jour)
+  const par = nomsConfieePar(tache, profilsParId)
 
   const classes = ['carte-tache']
   if (echue) classes.push('carte-tache--echue')
@@ -118,6 +129,7 @@ export default function CarteTache({ tache, profilsParId, jour, profil, onOuvrir
               {nomsAttribues(tache, profilsParId)}
             </span>
           </div>
+          {par && <div className="confiee-par" style={{ marginTop: 6 }}>Confiée par <strong>{par}</strong></div>}
           <div className="carte-tache__bas">
             <PastilleStatut statut={tache.statut} onClick={modifiable ? () => onMenu(tache) : undefined} />
             <span className={`delai ${d.classe}`}>{d.texte}</span>

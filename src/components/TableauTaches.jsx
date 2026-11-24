@@ -1,5 +1,5 @@
 import PastilleStatut from './PastilleStatut'
-import { nomsAttribues } from './CarteTache'
+import { nomsAttribues, nomsConfieePar } from './CarteTache'
 import { delai, estEchue, estTerminee } from '../lib/statuts'
 import { formaterDate } from '../lib/dates'
 import { peutChangerStatut } from '../lib/droits'
@@ -23,6 +23,7 @@ export default function TableauTaches({ taches, profilsParId, jour, profil, onOu
         <tbody>
           {taches.map((t) => {
             const d = delai(t, jour)
+            const par = nomsConfieePar(t, profilsParId, false)
             const classe = estTerminee(t) ? 'ligne--terminee' : estEchue(t, jour) ? 'ligne--echue' : ''
             return (
               <tr key={t.id} className={classe} onClick={() => onOuvrir(t)}>
@@ -30,6 +31,7 @@ export default function TableauTaches({ taches, profilsParId, jour, profil, onOu
                 <td className="cellule-titre">
                   {t.intitule}
                   {t.priorite === 'haute' && !estTerminee(t) && <> <span className="badge-haute">Haute</span></>}
+                  {par && <div className="confiee-par" style={{ fontWeight: 400 }}>Confiée par <strong>{par}</strong></div>}
                 </td>
                 <td>{formaterDate(t.date_creation)}</td>
                 <td>{formaterDate(t.echeance)}</td>

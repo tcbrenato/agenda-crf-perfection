@@ -12,7 +12,7 @@ import { estGestionnaire } from '../lib/droits'
 /** Ajout d'une tâche en moins de 10 secondes : intitulé, échéance, attributaire(s). */
 export default function AjoutRapide({ ouvert, onFermer }) {
   const { profil } = useAuth()
-  const { profilsActifs, remplacerTache } = useDonnees()
+  const { profilsAssignables, remplacerTache } = useDonnees()
   const toast = useToast()
   const naviguer = useNavigate()
 
@@ -81,7 +81,7 @@ export default function AjoutRapide({ ouvert, onFermer }) {
         <div className="champ">
           <span className="etiquette">Attributaire(s) *</span>
           <SelecteurPersonnes
-            profils={profilsActifs}
+            profils={profilsAssignables}
             selection={f.attribues}
             onChange={(attribues) => setF({ ...f, attribues })}
             moiId={profil?.id}

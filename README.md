@@ -82,7 +82,8 @@ agenda-crf-perfection/
 │  │  ├─ 0002_rls.sql          Politiques de sécurité (Row Level Security)
 │  │  ├─ 0003_rappels.sql      Architecture des rappels (préparée, non planifiée)
 │  │  ├─ 0004_admin.sql        État des comptes pour la page Administration
-│  │  └─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
+│  │  ├─ 0005_roles.sql        Séparation des rôles : admin (comptes) / DG (tâches)
+│  │  └─ 0006_visibilite_notifications.sql  Membres : leurs tâches uniquement ; notifications
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
 │     ├─ notifier-attribution/ Email à l'attributaire quand le DG ou l'admin lui confie une tâche
@@ -127,6 +128,7 @@ agenda-crf-perfection/
    3. `supabase/migrations/0003_rappels.sql`
    4. `supabase/migrations/0004_admin.sql`
    5. `supabase/migrations/0005_roles.sql`
+   6. `supabase/migrations/0006_visibilite_notifications.sql`
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -294,7 +296,13 @@ Dans **Administration**, onglet **Données**, puis **Importer un fichier** (admi
 
 ---
 
-## 11 bis. Email à l'attribution d'une tâche
+## 11 bis. Notifications à l'attribution d'une tâche
+
+**Dans l'application** : quand quelqu'un d'autre vous attribue une tâche, une notification apparaît sous la cloche (en haut sur téléphone, « Notifications » dans le menu sur ordinateur). Un message s'affiche aussi si l'application est ouverte. Ces notifications sont créées automatiquement par la base de données (migration 0006).
+
+**Traçabilité** : sur la tâche, « Confiée par X » indique qui l'a attribuée, si ce n'est pas la personne elle-même. Sur la fiche, la date de l'attribution s'affiche aussi.
+
+### Email
 
 Quand le **DG** ou un **administrateur** attribue une tâche à quelqu'un, à la création ou en ajoutant un attributaire, la personne reçoit un email de `contact@crfperfection.pro`. L'email contient le N°, l'intitulé, l'échéance, la priorité, la description, qui l'a confiée, les co-attributaires et un bouton « Voir la tâche ».
 
@@ -347,7 +355,7 @@ La sécurité est assurée **dans la base de données** (Row Level Security et t
 | Action | Administrateur | DG | Membre |
 |---|---|---|---|
 | Page **Administration** (comptes, rôles, invitations, import, journal) | ✅ | ❌ | ❌ |
-| Voir toutes les tâches de l'équipe | ✅ | ✅ | ✅ |
+| Voir les tâches | ✅ toutes | ✅ toutes | ✅ seulement les siennes (attribuées à lui ou créées par lui) |
 | Créer une tâche | ✅ | ✅ | ✅ (il en devient le créateur) |
 | Modifier une tâche (intitulé, échéance…) | ✅ toutes | ✅ toutes | ✅ seulement celles qu'il a créées |
 | Changer le statut | ✅ toutes | ✅ toutes | ✅ tâches qui lui sont attribuées ou qu'il a créées |

@@ -11,10 +11,11 @@ import { FILTRES_STATUT, correspondStatut, filtrerTaches, libelleFiltres } from 
 import { trierParEcheance, trierParNumero } from '../lib/statuts'
 import { nomCourt, pluriel } from '../lib/texte'
 import { messageErreur } from '../lib/api'
+import { estGestionnaire } from '../lib/droits'
 
 export default function Taches() {
   const { profil } = useAuth()
-  const { taches, profilsActifs, profilsParId, jour, chargement } = useDonnees()
+  const { taches, profilsAssignables, profilsParId, jour, chargement } = useDonnees()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const [exportOuvert, setExportOuvert] = useState(false)
@@ -59,7 +60,8 @@ export default function Taches() {
     }
   }
 
-  const autres = profilsActifs.filter((p) => p.id !== profil.id)
+  // filtre par personne : réservé au DG et à l'admin (les membres ne voient que leurs tâches)
+  const autres = estGestionnaire(profil) ? profilsAssignables.filter((p) => p.id !== profil.id) : []
 
   return (
     <>
@@ -111,16 +113,18 @@ export default function Taches() {
           </button>
         ))}
       </div>
+      {autres.length > 0 && (
       <div className="puces" role="group" aria-label="Filtrer par attributaire" style={{ marginTop: 4 }}>
-        {autres.map((p) => (
-          <button key={p.id} type="button" className="puce" aria-pressed={personne === p.id} onClick={() => majParam('personne', personne === p.id ? null : p.id)}>
-            {nomCourt(p.nom_complet)}
+          {autres.map((p) => (
+            <button key={p.id} type="button" className="puce" aria-pressed={personne === p.id} onClick={() => majParam('personne', personne === p.id ? null : p.id)}>
+              {nomCourt(p.nom_complet)}
+            </button>
+          ))}
+          <button type="button" className="puce" aria-pressed={personne === 'aucun'} onClick={() => majParam('personne', personne === 'aucun' ? null : 'aucun')}>
+            Non attribuées
           </button>
-        ))}
-        <button type="button" className="puce" aria-pressed={personne === 'aucun'} onClick={() => majParam('personne', personne === 'aucun' ? null : 'aucun')}>
-          Non attribuées
-        </button>
-      </div>
+        </div>
+      )}
 
       <div className="ligne ligne--espace texte-doux texte-petit" style={{ margin: '10px 0' }}>
         <span>{pluriel(resultat.length, 'tâche')} · {sousTitre}</span>

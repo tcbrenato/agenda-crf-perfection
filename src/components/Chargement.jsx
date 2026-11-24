@@ -8,10 +8,14 @@ export function SqueletteCartes({ nombre = 4 }) {
   )
 }
 
+/** Écran de chargement : anneau qui tourne autour du logo CRF. */
 export function ChargementPleinEcran() {
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
-      <img src="/logo-entete.png" alt="CRF Perfection" width="140" height="58" style={{ height: 'auto' }} />
+    <div className="chargement" role="status" aria-label="Chargement en cours">
+      <div className="chargement__cercle">
+        <span className="chargement__anneau" />
+        <img src="/logo-entete.png" alt="CRF Perfection" width="104" height="43" />
+      </div>
     </div>
   )
 }

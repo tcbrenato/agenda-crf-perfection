@@ -6,6 +6,7 @@ import { useDonnees } from '../context/DonneesContext'
 import { ajouterJours, formaterDateLongue, formaterMois, jourSemaine } from '../lib/dates'
 import { estEchue, estTerminee, trierParEcheance } from '../lib/statuts'
 import { majuscule, pluriel } from '../lib/texte'
+import { estGestionnaire } from '../lib/droits'
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
@@ -61,10 +62,12 @@ export default function Calendrier() {
     <>
       <div className="ligne ligne--espace" style={{ marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
         <h1 className="titre-page">Calendrier</h1>
-        <div className="segment" role="group" aria-label="Tâches affichées">
-          <button type="button" aria-pressed={!miennes} onClick={() => setMiennes(false)}>Équipe</button>
-          <button type="button" aria-pressed={miennes} onClick={() => setMiennes(true)}>Mes tâches</button>
-        </div>
+        {estGestionnaire(profil) && (
+          <div className="segment" role="group" aria-label="Tâches affichées">
+            <button type="button" aria-pressed={!miennes} onClick={() => setMiennes(false)}>Équipe</button>
+            <button type="button" aria-pressed={miennes} onClick={() => setMiennes(true)}>Mes tâches</button>
+          </div>
+        )}
       </div>
 
       <div className="cal-disposition">

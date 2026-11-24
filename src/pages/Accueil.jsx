@@ -8,6 +8,7 @@ import { useDonnees } from '../context/DonneesContext'
 import { ajouterJours, formaterDateLongue } from '../lib/dates'
 import { estEchue, estTerminee, trierParEcheance } from '../lib/statuts'
 import { estGestionnaire } from '../lib/droits'
+import { useEstOrdinateur } from '../hooks/useMediaQuery'
 import { majuscule, prenom } from '../lib/texte'
 import { messageErreur } from '../lib/api'
 
@@ -16,20 +17,24 @@ const CLE_PORTEE = 'agenda-crf-portee-accueil'
 export default function Accueil() {
   const { profil } = useAuth()
   const { taches, jour, chargement, erreur, recharger } = useDonnees()
-  const [portee, setPortee] = useState(() => {
+  const ordinateur = useEstOrdinateur()
+  // Les membres ne voient que leurs tâches : pas de bascule Équipe / Mes tâches
+  const gestionnaire = estGestionnaire(profil)
+  const [porteeChoisie, setPortee] = useState(() => {
     try {
       return localStorage.getItem(CLE_PORTEE) || (estGestionnaire(profil) ? 'equipe' : 'moi')
     } catch {
       return 'equipe'
     }
   })
+  const portee = gestionnaire ? porteeChoisie : 'tout'
   const changerPortee = (p) => {
     setPortee(p)
     try { localStorage.setItem(CLE_PORTEE, p) } catch { /* stockage indisponible */ }
   }
 
   const { liste, compteurs, enRetard, semaine } = useMemo(() => {
-    const liste = portee === 'moi' ? taches.filter((t) => t.attribues.includes(profil.id)) : taches
+    const liste = portee === 'moi' ? taches.filter((t) => t.attribues.includes(profil.id)) : taches // 'tout' : ce que la base autorise
     const dans7 = ajouterJours(jour, 7)
     const enRetard = liste.filter((t) => estEchue(t, jour)).sort(trierParEcheance)
     const semaine = liste
@@ -57,10 +62,12 @@ export default function Accueil() {
           <h1 className="titre-page">Bonjour {prenom(profil.nom_complet)}</h1>
           <p className="sous-titre">{majuscule(formaterDateLongue(jour))}</p>
         </div>
-        <div className="segment" role="group" aria-label="Portée du tableau de bord">
-          <button type="button" aria-pressed={portee === 'equipe'} onClick={() => changerPortee('equipe')}>Équipe</button>
-          <button type="button" aria-pressed={portee === 'moi'} onClick={() => changerPortee('moi')}>Mes tâches</button>
-        </div>
+        {gestionnaire && (
+          <div className="segment" role="group" aria-label="Portée du tableau de bord">
+            <button type="button" aria-pressed={portee === 'equipe'} onClick={() => changerPortee('equipe')}>Équipe</button>
+            <button type="button" aria-pressed={portee === 'moi'} onClick={() => changerPortee('moi')}>Mes tâches</button>
+          </div>
+        )}
       </div>
 
       {erreur && (
@@ -92,33 +99,30 @@ export default function Accueil() {
       {chargement ? (
         <div style={{ marginTop: 24 }}><SqueletteCartes nombre={3} /></div>
       ) : (
-        <div className="colonnes-accueil">
+        <>
           {enRetard.length > 0 ? (
             <section className="bloc-retard" aria-labelledby="titre-retard">
               <h2 className="titre-section" id="titre-retard">
                 <IconeAlerte /> En retard <span className="compte">({enRetard.length})</span>
               </h2>
-              <ListeTaches taches={enRetard.slice(0, 8)} />
-              {enRetard.length > 8 && (
+              <ListeTaches taches={enRetard.slice(0, ordinateur ? 15 : 8)} tableau />
+              {enRetard.length > (ordinateur ? 15 : 8) && (
                 <Link to={`/taches?filtre=echues${suffixe}`} className="btn btn--alerte btn--bloc" style={{ marginTop: 10 }}>
                   Voir les {enRetard.length} tâches en retard
                 </Link>
               )}
             </section>
           ) : (
-            <section>
-              <h2 className="titre-section">En retard</h2>
-              <p className="vide">Aucune tâche en retard. 👍</p>
-            </section>
+            liste.length > 0 && <p className="message-succes">Aucune tâche en retard 👍</p>
           )}
 
           <section aria-labelledby="titre-semaine">
             <h2 className="titre-section" id="titre-semaine">
               <IconeHorloge width="20" height="20" /> À échéance dans les 7 jours <span className="compte">({semaine.length})</span>
             </h2>
-            <ListeTaches taches={semaine} vide="Rien à rendre dans les 7 prochains jours." />
+            <ListeTaches taches={semaine} tableau vide="Rien à rendre dans les 7 prochains jours." />
           </section>
-        </div>
+        </>
       )}
       {!chargement && liste.length === 0 && (
         <p className="message-info" style={{ marginTop: 16 }}>

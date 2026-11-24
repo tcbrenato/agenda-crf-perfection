@@ -71,6 +71,8 @@ export function DonneesProvider({ children }) {
       taches,
       profils,
       profilsActifs: profils.filter((p) => p.actif),
+      // personnes à qui l'on peut confier une tâche (le compte d'administration en est exclu)
+      profilsAssignables: profils.filter((p) => p.actif && p.role !== 'admin'),
       profilsParId,
       chargement,
       erreur,

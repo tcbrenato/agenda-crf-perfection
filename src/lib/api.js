@@ -39,11 +39,24 @@ export async function modifierProfil(id, champs) {
 }
 
 // ------------------------------- Tâches --------------------------------
-const SELECTION_TACHE = '*, attributions(profil_id)'
+const SELECTION_TACHE = '*, attributions(profil_id, attribue_par, attribue_le)'
 
 function enrichir(t) {
   const { attributions, ...reste } = t
-  return { ...reste, attribues: (attributions || []).map((a) => a.profil_id) }
+  const liste = attributions || []
+  return {
+    ...reste,
+    attribues: liste.map((a) => a.profil_id),
+    // traçabilité : qui a attribué la tâche à qui, et quand
+    attributionsDetail: liste.map((a) => ({ profil_id: a.profil_id, attribue_par: a.attribue_par, attribue_le: a.attribue_le }))
+  }
+}
+
+/** Personnes (autres que l'attributaire lui-même) qui ont confié la tâche. */
+export function confieePar(tache) {
+  return [...new Set((tache.attributionsDetail || [])
+    .filter((a) => a.attribue_par && a.attribue_par !== a.profil_id)
+    .map((a) => a.attribue_par))]
 }
 
 export async function chargerTaches() {
@@ -145,6 +158,22 @@ export async function supprimerCommentaire(id) {
 
 export async function chargerHistorique(tacheId) {
   return verifier(await supabase.from('historique').select('*').eq('tache_id', tacheId).order('date', { ascending: false }))
+}
+
+// ---------------------------- Notifications ----------------------------
+export async function chargerNotifications() {
+  return verifier(
+    await supabase
+      .from('notifications')
+      .select('*, taches(id, numero, intitule, echeance)')
+      .order('cree_le', { ascending: false })
+      .limit(40)
+  )
+}
+
+export async function marquerNotificationsLues(ids) {
+  if (!ids.length) return
+  verifier(await supabase.from('notifications').update({ lu: true }).in('id', ids))
 }
 
 // ------------------------- Gestion des membres -------------------------

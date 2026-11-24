@@ -158,6 +158,45 @@ h1, h2, h3, p { margin: 0; }
   background: var(--rouge); color: #fff; font-size: 0.6875rem; line-height: 18px; text-align: center;
 }
 
+/* Cloche des notifications */
+.bouton-cloche { position: relative; }
+.pastille-cloche {
+  position: absolute; top: 4px; right: 2px;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--rouge); color: #fff; font-size: 0.6875rem; font-weight: 700; line-height: 18px; text-align: center;
+}
+.liste-notifications { display: flex; flex-direction: column; }
+.notification {
+  display: flex; gap: 10px; align-items: flex-start; text-align: left; width: 100%;
+  padding: 12px 4px; border: 0; border-bottom: 1px solid var(--bordure); background: none; cursor: pointer;
+  font-size: 0.9375rem; line-height: 1.4; min-height: 56px;
+}
+.notification:hover { background: var(--fond); }
+.notification__point { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; flex: none; background: transparent; }
+.notification--non-lue .notification__point { background: var(--bordeaux); }
+.notification--non-lue { background: #fbf6f6; }
+.notification__corps { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.notification__date { font-size: 0.8125rem; color: var(--texte-pale); }
+
+/* Barre latérale : uniquement sur ordinateur */
+.barre-laterale { display: none; }
+
+/* Écran de chargement : anneau qui tourne autour du logo */
+.chargement { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; background: #fff; }
+.chargement__cercle { position: relative; width: 168px; height: 168px; display: flex; align-items: center; justify-content: center; }
+.chargement__cercle img { width: 104px; height: auto; }
+.chargement__anneau {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 4px solid #eceef2; border-top-color: var(--bordeaux); border-right-color: var(--bleu-nuit);
+  animation: rotation 0.9s linear infinite;
+}
+.chargement--bloc { min-height: 50vh; background: transparent; }
+@keyframes rotation { to { transform: rotate(360deg); } }
+
+/* Traçabilité « Confiée par » */
+.confiee-par { font-size: 0.8125rem; color: var(--texte-doux); display: block; line-height: 1.4; }
+.confiee-par strong { color: var(--bleu-nuit); font-weight: 650; }
+
 /* Bouton flottant « + » */
 .fab {
   position: fixed;
@@ -473,6 +512,10 @@ button.statut::after { content: '▾'; font-size: 0.7rem; opacity: 0.7; margin-l
 }
 .segment button[aria-pressed='true'] { background: var(--blanc); color: var(--bleu-nuit); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
+.message-succes {
+  margin-top: 20px; padding: 12px 14px; border-radius: var(--rayon);
+  background: #eef7f1; border: 1px solid #cfe8d8; color: var(--st-termine-texte); font-weight: 600; font-size: 0.9375rem;
+}
 .vide {
   text-align: center; color: var(--texte-doux);
   padding: 28px 16px;
@@ -696,18 +739,41 @@ button.statut::after { content: '▾'; font-size: 0.7rem; opacity: 0.7; margin-l
    Ordinateur et tablette (≥ 900 px)
    -------------------------------------------------------------------- */
 @media (min-width: 900px) {
-  .app { padding-bottom: 32px; }
-  .nav-basse { display: none; }
-  .contenu { padding: 24px 32px; }
-  .entete__barre { padding: 0 32px; height: 64px; }
-  .entete__nav { display: flex; gap: 4px; margin-left: 24px; }
-  .entete__nav a {
-    min-height: 44px; padding: 0 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-    text-decoration: none; font-weight: 600; color: var(--texte-doux);
+  :root { --largeur-laterale: 248px; }
+  .app { padding-bottom: 32px; padding-left: var(--largeur-laterale); }
+  .nav-basse, .entete, .fab { display: none; }
+
+  .barre-laterale {
+    display: flex; flex-direction: column; gap: 18px;
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--largeur-laterale); z-index: 40;
+    background: var(--blanc); border-right: 1px solid var(--bordure);
+    padding: 20px 16px;
+    overflow-y: auto;
   }
-  .entete__nav a svg { width: 20px; height: 20px; }
-  .entete__nav a.active { color: var(--bleu-nuit); background: var(--fond); }
-  .fab { bottom: 32px; right: 32px; }
+  .barre-laterale__marque { display: flex; align-items: center; gap: 10px; padding: 0 4px 4px; }
+  .barre-laterale__marque img { height: 34px; width: auto; }
+  .barre-laterale__nav { display: flex; flex-direction: column; gap: 2px; }
+  .lien-lateral {
+    position: relative; display: flex; align-items: center; gap: 12px; width: 100%;
+    min-height: 44px; padding: 0 12px; border-radius: 8px; border: 0; background: none;
+    text-decoration: none; font-weight: 600; font-size: 0.9375rem; color: var(--texte-doux); cursor: pointer; text-align: left;
+  }
+  .lien-lateral svg { width: 20px; height: 20px; flex: none; }
+  .lien-lateral:hover { background: var(--fond); color: var(--bleu-nuit); }
+  .lien-lateral.active { background: #eef1f6; color: var(--bleu-nuit); box-shadow: inset 3px 0 0 var(--bordeaux); }
+  .lien-lateral .pastille-nombre, .lien-lateral .pastille-cloche {
+    position: static; margin-left: auto; min-width: 22px; height: 20px; line-height: 20px; border-radius: 10px;
+    background: var(--rouge); color: #fff; font-size: 0.75rem; font-weight: 700; text-align: center; padding: 0 6px;
+  }
+  .barre-laterale__profil {
+    margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px;
+    text-decoration: none; border: 1px solid var(--bordure);
+  }
+  .barre-laterale__profil:hover { background: var(--fond); }
+  .barre-laterale__profil strong { display: block; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barre-laterale__profil small { display: block; font-size: 0.75rem; color: var(--texte-doux); }
+
+  .contenu { max-width: 1440px; padding: 28px 36px; }
   .compteurs { grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .compteur { padding: 18px 20px; }
   .compteur__valeur { font-size: 2.5rem; }
@@ -717,12 +783,11 @@ button.statut::after { content: '▾'; font-size: 0.7rem; opacity: 0.7; margin-l
   .barre-action { bottom: 0; }
   .toasts { bottom: 24px; left: auto; right: 24px; align-items: flex-end; }
   .grille-infos { grid-template-columns: repeat(4, 1fr); }
-  .colonnes-accueil { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-  .colonnes-accueil .bloc-retard { margin-top: 24px; }
   .page-fiche { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; }
-  .formulaire-large { max-width: 720px; }
-  .cal-disposition { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: start; }
-  .cal-case { aspect-ratio: auto; min-height: 72px; }
+  .formulaire-large { max-width: 760px; }
+  .cal-disposition { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  .cal-case { aspect-ratio: auto; min-height: 76px; }
+  .liste-cartes--grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

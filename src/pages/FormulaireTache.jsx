@@ -19,7 +19,7 @@ export default function FormulaireTache() {
   const naviguer = useNavigate()
   const toast = useToast()
   const { profil } = useAuth()
-  const { taches, profils, profilsActifs, chargement, remplacerTache } = useDonnees()
+  const { taches, profils, profilsAssignables, chargement, remplacerTache } = useDonnees()
   const tache = edition ? taches.find((t) => t.id === id) : null
   const gestionnaire = estGestionnaire(profil)
 
@@ -59,7 +59,7 @@ export default function FormulaireTache() {
   if (!f) return <SqueletteCartes nombre={2} />
 
   // personnes proposées : membres actifs + attributaires actuels éventuellement inactifs
-  const choix = [...profilsActifs, ...profils.filter((p) => !p.actif && f.attribues.includes(p.id))]
+  const choix = [...profilsAssignables, ...profils.filter((p) => (!p.actif || p.role === 'admin') && f.attribues.includes(p.id))]
 
   const enregistrer = async (e) => {
     e.preventDefault()

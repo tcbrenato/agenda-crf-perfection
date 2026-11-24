@@ -63,6 +63,7 @@ export default function Administration() {
     const nonAttribuees = taches.filter((t) => !estTerminee(t) && !t.attribues.length).length
     // charge par personne : tâches ouvertes et échues
     const charge = actifs
+      .filter((p) => p.role !== 'admin')
       .map((p) => {
         const siennes = taches.filter((t) => t.attribues.includes(p.id) && !estTerminee(t))
         return { p, ouvertes: siennes.length, echues: siennes.filter((t) => estEchue(t, jour)).length }

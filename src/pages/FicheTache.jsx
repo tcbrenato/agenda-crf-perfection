@@ -191,12 +191,19 @@ export default function FicheTache() {
             {tache.attribues.map((pid) => {
               const p = profilsParId[pid]
               if (!p) return null
+              const detail = (tache.attributionsDetail || []).find((a) => a.profil_id === pid)
+              const parQuelquUnDautre = detail?.attribue_par && detail.attribue_par !== pid
               return (
                 <div key={pid} className="personne">
                   <span className="avatar">{initiales(p.nom_complet)}</span>
                   <div style={{ minWidth: 0 }}>
                     <div className="personne__nom">{p.nom_complet}{!p.actif && ' (inactif)'}</div>
                     <div className="personne__poste">{p.poste || ROLES[p.role]}</div>
+                    {parQuelquUnDautre && (
+                      <div className="confiee-par">
+                        Confiée par <strong>{profilsParId[detail.attribue_par]?.nom_complet || 'un ancien membre'}</strong> le {formaterHorodatage(detail.attribue_le)}
+                      </div>
+                    )}
                   </div>
                   {p.telephone && (
                     <a className="btn-icone" href={`tel:${p.telephone.replace(/\s/g, '')}`} aria-label={`Appeler ${p.nom_complet}`}><IconeTelephone /></a>
