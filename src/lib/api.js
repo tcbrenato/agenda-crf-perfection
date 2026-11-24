@@ -19,6 +19,8 @@ export function messageErreur(e) {
   if (/Password should be at least/i.test(brut)) return 'Le mot de passe doit contenir au moins 8 caractères.'
   if (/same password|different from the old/i.test(brut)) return "Le nouveau mot de passe doit être différent de l'ancien."
   if (/rate limit|too many/i.test(brut)) return 'Trop de tentatives. Patientez quelques minutes.'
+  if (/Bucket not found/i.test(brut)) return "Espace de stockage introuvable : exécutez les migrations 0007, 0010 et 0011 dans Supabase."
+  if (/exceeded the maximum allowed size|Payload too large/i.test(brut)) return 'Fichier trop lourd (10 Mo maximum).'
   return brut || 'Une erreur est survenue.'
 }
 
@@ -214,7 +216,7 @@ export async function changerPhoto(profilId, fichier) {
   if (!fichier.type.startsWith('image/')) throw new Error('Choisissez une image (JPEG ou PNG).')
   const blob = await preparerPhoto(fichier)
   const chemin = `${profilId}/${Date.now()}.jpg`
-  const { error } = await supabase.storage.from('avatars').upload(chemin, blob, { contentType: 'image/jpeg', upsert: true })
+  const { error } = await supabase.storage.from('avatars').upload(chemin, blob, { contentType: 'image/jpeg' })
   if (error) throw error
   const { data } = supabase.storage.from('avatars').getPublicUrl(chemin)
   return modifierProfil(profilId, { photo_url: data.publicUrl })

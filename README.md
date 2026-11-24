@@ -87,7 +87,8 @@ agenda-crf-perfection/
 │  │  ├─ 0007_ameliorations.sql Reports, projets, étapes, pièces jointes, récurrence, rappels
 │  │  ├─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
 │  │  ├─ 0009_emails_accuses.sql Emails de toutes les notifications, accusé de réception
-│  │  └─ 0010_chat_photos_cloture.sql Messagerie, photos de profil, compte rendu de clôture
+│  │  ├─ 0010_chat_photos_cloture.sql Messagerie, photos de profil, compte rendu de clôture
+│  │  └─ 0011_correctif_stockage.sql Droits de lecture du stockage
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
 │     ├─ notifier-attribution/ Bouton « Prévenir par email » (renvoi manuel)
@@ -138,6 +139,7 @@ agenda-crf-perfection/
    8. `supabase/migrations/0008_planification.sql` (après avoir déployé la fonction `rappels-echeances`, voir §11)
    9. `supabase/migrations/0009_emails_accuses.sql` (après 0008 ; puis déployer `envoyer-notifications`, voir §11 bis)
    10. `supabase/migrations/0010_chat_photos_cloture.sql` (messagerie, photos de profil, compte rendu de clôture)
+   11. `supabase/migrations/0011_correctif_stockage.sql` (droits de lecture du stockage : photos et pièces jointes)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
