@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get('SUPABASE_URL')!
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda-crf-perfection.vercel.app').replace(/\/+$/, '')
+  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda.crfperfection.pro').replace(/\/+$/, '')
   const admin = createClient(url, cleService, { auth: { persistSession: false, autoRefreshToken: false } })
 
   const hote = Deno.env.get('SMTP_HOST'), utilisateur = Deno.env.get('SMTP_USER'), motDePasse = Deno.env.get('SMTP_PASS')

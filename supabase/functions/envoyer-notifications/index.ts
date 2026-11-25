@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false, autoRefreshToken: false }
   })
-  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda-crf-perfection.vercel.app').replace(/\/+$/, '')
+  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda.crfperfection.pro').replace(/\/+$/, '')
   const hote = Deno.env.get('SMTP_HOST'), utilisateur = Deno.env.get('SMTP_USER'), motDePasse = Deno.env.get('SMTP_PASS')
   if (!hote || !utilisateur || !motDePasse) return json({ erreur: 'Secrets SMTP non configurés' }, 500)
   const port = Number(Deno.env.get('SMTP_PORT') ?? '465')

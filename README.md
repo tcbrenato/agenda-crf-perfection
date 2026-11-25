@@ -257,6 +257,17 @@ L'inscription libre est fermée : le premier compte se crée dans Supabase. C'es
 
 Toute modification d'une variable d'environnement sur Vercel nécessite un **Redeploy**.
 
+### Adresse personnalisée : `agenda.crfperfection.pro`
+
+On ajoute un **sous-domaine**. Le site principal et les emails `@crfperfection.pro` ne changent pas.
+
+1. **Vercel** : **Settings**, puis **Domains**, puis **Add**. Saisissez `agenda.crfperfection.pro`. Vercel affiche un enregistrement **CNAME** à créer (par exemple `cname.vercel-dns.com`, ou une valeur propre au projet : utilisez exactement celle affichée).
+2. **Hostinger** (hPanel) : **Domaines**, puis `crfperfection.pro`, puis **DNS / Serveurs de noms**. Ajoutez un enregistrement **CNAME** : nom `agenda`, cible = la valeur Vercel, TTL par défaut. **Ne modifiez ni ne supprimez aucun autre enregistrement** (A, MX, TXT…).
+3. Patientez de quelques minutes à quelques heures, jusqu'à ce que Vercel affiche **Valid Configuration**. Le certificat HTTPS est automatique.
+4. **Supabase**, puis **Authentication**, puis **URL Configuration** : **Site URL** = `https://agenda.crfperfection.pro`, et ajoutez `https://agenda.crfperfection.pro/**` dans les **Redirect URLs** (gardez l'ancienne adresse pendant la transition).
+5. **Supabase**, puis **Edge Functions**, puis **Secrets** : `APP_URL` = `https://agenda.crfperfection.pro` (liens et logo des emails).
+6. L'application déjà installée sur les téléphones correspond à l'ancienne adresse : il faut se reconnecter, puis réinstaller l'application depuis la nouvelle adresse.
+
 ### Installer l'application sur le téléphone
 
 - **Android (Chrome)** : ouvrez l'adresse, puis **Mon compte** et **Installer sur l'écran d'accueil**, ou le menu ⋮ puis **Installer l'application**.
@@ -344,7 +355,7 @@ Quand le **DG** ou un **administrateur** attribue une tâche à quelqu'un, à la
    | `SMTP_PORT` | `465` |
    | `SMTP_USER` | `contact@crfperfection.pro` |
    | `SMTP_PASS` | mot de passe de la boîte mail |
-   | `APP_URL` | `https://agenda-crf-perfection.vercel.app` |
+   | `APP_URL` | `https://agenda.crfperfection.pro` |
 3. Testez : depuis le compte du DG, créez une tâche attribuée à un membre.
 4. Pour une tâche déjà existante, le bouton **Prévenir par email** de la fiche (DG et administrateur) renvoie l'email à tous ses attributaires. En cas de problème, consultez **Edge Functions**, puis `notifier-attribution`, puis **Logs**.
 

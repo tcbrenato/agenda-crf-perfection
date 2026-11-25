@@ -21,7 +21,7 @@
 //    SMTP_USER   contact@crfperfection.pro
 //    SMTP_PASS   mot de passe de la boîte mail
 //    SMTP_FROM   CRF Perfection <contact@crfperfection.pro>   (facultatif)
-//    APP_URL     https://agenda-crf-perfection.vercel.app      (facultatif)
+//    APP_URL     https://agenda.crfperfection.pro              (facultatif)
 // =====================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import nodemailer from 'npm:nodemailer@6.9.16'
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get('SUPABASE_URL')!
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda-crf-perfection.vercel.app').replace(/\/+$/, '')
+  const appUrl = (Deno.env.get('APP_URL') ?? 'https://agenda.crfperfection.pro').replace(/\/+$/, '')
 
   const admin = createClient(url, cleService, { auth: { persistSession: false, autoRefreshToken: false } })
 
