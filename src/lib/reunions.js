@@ -47,8 +47,12 @@ export function bientot(o, maintenant = Date.now()) {
   return maintenant >= d - 15 * 60_000 && maintenant <= f
 }
 
+/** Ne garde que l'adresse du lien, même si du texte a été collé avec (« https://meet… pour ce soir »). */
 export function normaliserLien(l) {
   const t = String(l || '').trim()
   if (!t) return null
-  return /^https?:\/\//i.test(t) ? t : `https://${t}`
+  const url = t.match(/https?:\/\/[^\s<>"']+/i)?.[0]
+  if (url) return url.replace(/[.,;:)\]]+$/, '')
+  const nu = t.split(/\s+/)[0]
+  return /\./.test(nu) ? `https://${nu}` : null
 }

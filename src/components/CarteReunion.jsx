@@ -1,10 +1,11 @@
 import { useDonnees } from '../context/DonneesContext'
 import { useToast } from '../context/ToastContext'
 import { IconeCrayon } from './Icones'
-import { TYPES_EVENEMENT, bientot, heureCourte, libelleRecurrence, plateforme } from '../lib/reunions'
+import { TYPES_EVENEMENT, bientot, heureCourte, libelleRecurrence, normaliserLien, plateforme } from '../lib/reunions'
 
 /** Une réunion (occurrence) : heure, titre, répétition, lien « Rejoindre ». */
-export default function CarteReunion({ o, onModifier, compacte = false }) {
+export default function CarteReunion({ o: brut, onModifier, compacte = false }) {
+  const o = { ...brut, lien: normaliserLien(brut.lien) }
   const { profilsParId } = useDonnees()
   const toast = useToast()
   const type = TYPES_EVENEMENT[o.type] || TYPES_EVENEMENT.reunion

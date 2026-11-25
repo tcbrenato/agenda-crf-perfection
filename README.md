@@ -142,6 +142,7 @@ agenda-crf-perfection/
    10. `supabase/migrations/0010_chat_photos_cloture.sql` (messagerie, photos de profil, compte rendu de clôture)
    11. `supabase/migrations/0011_correctif_stockage.sql` (droits de lecture du stockage : photos et pièces jointes)
    12. `supabase/migrations/0012_reunions.sql` (réunions, projets, événements, rappel 30 min avant)
+   13. `supabase/migrations/0013_lien_reunion.sql` (nettoyage automatique des liens de réunion)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 

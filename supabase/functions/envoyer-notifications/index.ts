@@ -49,6 +49,12 @@ type Notif = {
 const fmtQuand = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Porto-Novo', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
 const fmtHeure = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Porto-Novo', hour: '2-digit', minute: '2-digit' })
 const JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+/** Ne garde que l'adresse du lien (du texte a pu être collé avec). */
+function urlSeule(l: unknown) {
+  const m = String(l ?? '').match(/https?:\/\/[^\s<>"']+/i)
+  return m ? m[0].replace(/[.,;:)\]]+$/, '') : ''
+}
+
 function plateforme(lien: string) {
   if (/meet\.google/i.test(lien)) return 'Google Meet'
   if (/zoom\./i.test(lien)) return 'Zoom'
@@ -60,7 +66,8 @@ function plateforme(lien: string) {
 function contenu(n: Notif) {
   const qui = n.auteur_nom || 'Quelqu’un'
   const tache = `N° ${n.numero} : ${n.intitule}`
-  const d = n.details || {}
+  const d = { ...(n.details || {}) } as Record<string, unknown>
+  if (d.lien) d.lien = urlSeule(d.lien) || null
   switch (n.type) {
     case 'attribution':
       return {

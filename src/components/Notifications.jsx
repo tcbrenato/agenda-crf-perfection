@@ -22,7 +22,8 @@ export default function Notifications({ notifications, variante = 'icone' }) {
       recharger()
       naviguer(`/taches/${n.taches.id}`)
     } else if (n.details?.evenement_id) {
-      if (n.type === 'rappel_reunion' && n.details.lien) window.open(n.details.lien, '_blank', 'noopener')
+      const lien = n.details.lien && String(n.details.lien).match(/https?:\/\/[^\s<>"']+/i)?.[0]
+      if (n.type === 'rappel_reunion' && lien) window.open(lien, '_blank', 'noopener')
       naviguer('/reunions')
     }
   }
