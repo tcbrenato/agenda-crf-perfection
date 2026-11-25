@@ -88,7 +88,8 @@ agenda-crf-perfection/
 │  │  ├─ 0008_planification.sql Appel quotidien de la fonction de rappels (pg_cron)
 │  │  ├─ 0009_emails_accuses.sql Emails de toutes les notifications, accusé de réception
 │  │  ├─ 0010_chat_photos_cloture.sql Messagerie, photos de profil, compte rendu de clôture
-│  │  └─ 0011_correctif_stockage.sql Droits de lecture du stockage
+│  │  ├─ 0011_correctif_stockage.sql Droits de lecture du stockage
+│  │  └─ 0012_reunions.sql      Réunions planifiées, répétition hebdomadaire, rappels 30 min
 │  └─ functions/
 │     ├─ admin-membres/        Invitation, désactivation et réactivation des comptes (admin)
 │     ├─ notifier-attribution/ Bouton « Prévenir par email » (renvoi manuel)
@@ -140,6 +141,7 @@ agenda-crf-perfection/
    9. `supabase/migrations/0009_emails_accuses.sql` (après 0008 ; puis déployer `envoyer-notifications`, voir §11 bis)
    10. `supabase/migrations/0010_chat_photos_cloture.sql` (messagerie, photos de profil, compte rendu de clôture)
    11. `supabase/migrations/0011_correctif_stockage.sql` (droits de lecture du stockage : photos et pièces jointes)
+   12. `supabase/migrations/0012_reunions.sql` (réunions, projets, événements, rappel 30 min avant)
 
    Ou, en une seule fois : `supabase/installation_complete.sql`.
 
@@ -376,6 +378,18 @@ Un même rappel n'est jamais envoyé deux fois : la fonction peut être appelée
 
 **Mise en place :** exécutez `0010_chat_photos_cloture.sql`, puis redéployez `envoyer-notifications` (nouvelle version qui inclut le compte rendu).
 
+## 11 quinquies. Réunions, projets et événements
+
+- **Page Réunions** : menu latéral sur ordinateur ; sur téléphone, depuis l'accueil (« Prochaines réunions », « Tout voir ») ou le calendrier (« Toutes les réunions »).
+- **Planifier** (DG et administrateur) : titre, type (Réunion, Projet, Événement), date, heure, durée, **lien Google Meet ou Zoom**, lieu, ordre du jour, participants (toute l'équipe ou des personnes choisies).
+- **Répétition hebdomadaire** sur un ou plusieurs jours. Le raccourci **« ⚡ Réunion du staff (mardi et vendredi, 19 h) »** remplit tout d'un coup.
+- **Tout le monde est prévenu** (cloche + email) à la création, à la modification et à l'annulation, avec le bouton **Rejoindre**.
+- **Rappel 30 minutes avant** (cloche + email avec « Rejoindre sur Google Meet / Zoom »), vérifié toutes les 5 minutes par la base.
+- **Bouton « Rejoindre »** sur chaque réunion : il devient bordeaux avec « ● Maintenant » 15 minutes avant le début et pendant la réunion.
+- Les réunions apparaissent dans le **calendrier** (point violet) et à l'**accueil** (3 prochaines).
+
+**Mise en place :** exécutez `0012_reunions.sql` (après 0008 pour la planification), puis redéployez `envoyer-notifications`.
+
 ## 11 ter. Autres fonctions
 
 | Fonction | Qui | Où |
@@ -389,6 +403,7 @@ Un même rappel n'est jamais envoyé deux fois : la fonction peut être appelée
 | **Pièces jointes** (10 Mo max, stockage privé) | Toute personne qui voit la tâche | Fiche de la tâche |
 | **Tâches récurrentes** (chaque semaine, chaque mois) | Formulaire, champ « Répéter » | Une fois la tâche terminée, la suivante est créée avec les mêmes attributaires et étapes |
 | **Statistiques** : terminées à temps, retard moyen, par personne, par mois, par projet | DG et admin | Menu **Statistiques** |
+| **Réunions** : planifier, modifier, annuler | DG et admin (tout le monde voit et rejoint) | Page **Réunions** |
 
 ---
 

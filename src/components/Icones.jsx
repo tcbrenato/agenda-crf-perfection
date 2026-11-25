@@ -41,3 +41,4 @@ export const IconeCloche = (p) => <Icone {...p}><path d="M6 9a6 6 0 1 1 12 0c0 6
 export const IconeDossier = (p) => <Icone {...p}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" /></Icone>
 export const IconeStats = (p) => <Icone {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></Icone>
 export const IconeMessage = (p) => <Icone {...p}><path d="M4 5h16v11H9l-5 4V5z" /><path d="M8 9h8M8 12.5h5" /></Icone>
+export const IconeVideo = (p) => <Icone {...p}><rect x="2.5" y="6" width="13" height="12" rx="2" /><path d="m15.5 10.5 6-3.5v10l-6-3.5" /></Icone>

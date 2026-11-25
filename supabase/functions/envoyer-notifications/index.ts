@@ -46,6 +46,16 @@ type Notif = {
   co_attributaires: string | null
 }
 
+const fmtQuand = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Porto-Novo', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+const fmtHeure = new Intl.DateTimeFormat('fr-FR', { timeZone: 'Africa/Porto-Novo', hour: '2-digit', minute: '2-digit' })
+const JOURS = ['', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+function plateforme(lien: string) {
+  if (/meet\.google/i.test(lien)) return 'Google Meet'
+  if (/zoom\./i.test(lien)) return 'Zoom'
+  if (/teams\./i.test(lien)) return 'Teams'
+  return 'la réunion'
+}
+
 /** Sujet, phrase d'introduction, détails et accent de couleur selon le type. */
 function contenu(n: Notif) {
   const qui = n.auteur_nom || 'Quelqu’un'
@@ -80,6 +90,37 @@ function contenu(n: Notif) {
       return d.acceptee
         ? { sujet: `Report accepté : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a <strong style="color:#1C6A40">accepté</strong> votre demande de report.`, citation: d.reponse ? String(d.reponse) : undefined, bouton: 'Voir la tâche', accent: '#1C6A40', lignes: [['Nouvelle échéance', jj(String(d.nouvelle_echeance ?? ''))]] }
         : { sujet: `Report refusé : ${tache}`, intro: `<strong>${echapper(qui)}</strong> a <strong style="color:#C8202F">refusé</strong> votre demande de report. L'échéance reste inchangée.`, citation: d.reponse ? String(d.reponse) : undefined, bouton: 'Voir la tâche', accent: '#C8202F', lignes: [['Échéance', jj(n.echeance)]] }
+    case 'reunion': {
+      const quand = d.debut ? fmtQuand.format(new Date(String(d.debut))) : ''
+      const jours = Array.isArray(d.jours) ? (d.jours as number[]).map((j) => JOURS[j]).join(' et ') : ''
+      const repet = d.recurrence === 'hebdomadaire' && jours ? `Chaque ${jours}` : ''
+      if (d.etat === 'annule') {
+        return { sujet: `Annulé : ${d.titre}`, intro: `<strong>${echapper(qui)}</strong> a <strong style="color:#C8202F">annulé</strong> « ${echapper(d.titre)} »${repet ? ` (${echapper(repet.toLowerCase())})` : ''}.`, bouton: 'Voir les réunions', accent: '#C8202F', lignes: [], evenement: true }
+      }
+      const modifie = d.etat === 'modifie'
+      return {
+        sujet: `${modifie ? 'Modifié' : 'Nouvelle réunion'} : ${d.titre} — ${quand}`,
+        intro: `<strong>${echapper(qui)}</strong> ${modifie ? 'a modifié' : 'a planifié'} : <strong>${echapper(d.titre)}</strong>.`,
+        bouton: d.lien ? `Rejoindre sur ${plateforme(String(d.lien))}` : 'Voir les réunions',
+        lienBouton: d.lien ? String(d.lien) : undefined,
+        accent: '#6B3FA0',
+        lignes: [['Prochaine séance', quand], ...(repet ? [['Répétition', repet]] : []), ['Durée', `${d.duree} min`], ...(d.lieu ? [['Lieu', String(d.lieu)]] : []), ...(d.lien ? [['Lien', String(d.lien)]] : [])],
+        citation: d.description ? String(d.description) : undefined,
+        evenement: true
+      }
+    }
+    case 'rappel_reunion': {
+      const h = d.debut ? fmtHeure.format(new Date(String(d.debut))) : ''
+      return {
+        sujet: `Dans 30 minutes : ${d.titre} à ${h}`,
+        intro: `Rappel : <strong>${echapper(d.titre)}</strong> commence à <strong>${h}</strong>, dans 30 minutes.`,
+        bouton: d.lien ? `Rejoindre sur ${plateforme(String(d.lien))}` : 'Voir les réunions',
+        lienBouton: d.lien ? String(d.lien) : undefined,
+        accent: '#96111C',
+        lignes: [['Heure', h], ['Durée', `${d.duree} min`], ...(d.lieu ? [['Lieu', String(d.lieu)]] : []), ...(d.lien ? [['Lien', String(d.lien)]] : [])],
+        evenement: true
+      }
+    }
     case 'accuse_reception':
       return { sujet: `Tâche bien reçue : ${tache}`, intro: `<strong>${echapper(qui)}</strong> confirme avoir <strong style="color:#1C6A40">bien reçu</strong> la tâche que vous lui avez confiée.`, bouton: 'Voir la tâche', accent: '#1C6A40', lignes: [['Échéance', jj(n.echeance)]] }
     default:
@@ -88,8 +129,9 @@ function contenu(n: Notif) {
 }
 
 function construire(n: Notif, appUrl: string) {
-  const c = contenu(n) as ReturnType<typeof contenu> & { citation?: string; description?: string | null }
-  const lien = n.tache_id ? `${appUrl}/taches/${n.tache_id}` : appUrl
+  const c = contenu(n) as ReturnType<typeof contenu> & { citation?: string; description?: string | null; lienBouton?: string; evenement?: boolean }
+  const lien = c.lienBouton ?? (n.tache_id ? `${appUrl}/taches/${n.tache_id}` : c.evenement ? `${appUrl}/reunions` : appUrl)
+  const titreBloc = n.numero ? '' : c.evenement ? String((n.details || {}).titre ?? '') : ''
   const lignes = (c.lignes as string[][])
     .map(([l, v]) => `<tr><td style="padding:5px 12px 5px 0;color:#5B6576;font-size:14px;white-space:nowrap;vertical-align:top">${echapper(l)}</td><td style="padding:5px 0;color:#1B2A41;font-size:14px;font-weight:600">${echapper(v)}</td></tr>`)
     .join('')
@@ -101,18 +143,18 @@ function construire(n: Notif, appUrl: string) {
 <tr><td style="padding:24px;color:#1B2A41;font-size:15px;line-height:1.5">
 <p style="margin:0 0 12px">Bonjour ${echapper(prenom(n.destinataire_nom))},</p>
 <p style="margin:0 0 16px">${c.intro}</p>
-${n.numero ? `<div style="border:1px solid #E3E6EB;border-left:4px solid ${c.accent};border-radius:8px;padding:14px 16px;margin-bottom:18px">
-  <div style="color:#8A93A3;font-size:13px;font-weight:700">N° ${n.numero}${n.priorite === 'haute' ? ' &nbsp;·&nbsp; <span style="color:#96111C">PRIORITÉ HAUTE</span>' : ''}</div>
-  <div style="color:#1B2A41;font-size:17px;font-weight:700;margin-top:4px;line-height:1.35">${echapper(n.intitule)}</div>
+${n.numero || titreBloc ? `<div style="border:1px solid #E3E6EB;border-left:4px solid ${c.accent};border-radius:8px;padding:14px 16px;margin-bottom:18px">
+  ${n.numero ? `<div style="color:#8A93A3;font-size:13px;font-weight:700">N° ${n.numero}${n.priorite === 'haute' ? ' &nbsp;·&nbsp; <span style="color:#96111C">PRIORITÉ HAUTE</span>' : ''}</div>` : ''}
+  <div style="color:#1B2A41;font-size:17px;font-weight:700;margin-top:4px;line-height:1.35">${echapper(n.numero ? n.intitule : titreBloc)}</div>
   ${lignes ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:8px">${lignes}</table>` : ''}
   ${c.citation ? `<p style="margin:12px 0 0;padding:10px 12px;background:#F5F6F8;border-radius:6px;color:#1B2A41;font-size:14px;white-space:pre-wrap">« ${echapper(c.citation)} »</p>` : ''}
   ${c.description ? `<p style="margin:12px 0 0;color:#1B2A41;font-size:14px;white-space:pre-wrap">${echapper(c.description)}</p>` : ''}
 </div>` : ''}
-<p style="margin:0"><a href="${lien}" style="background:#1B2A41;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 22px;border-radius:8px;display:inline-block">${echapper(c.bouton)}</a></p>
+<p style="margin:0"><a href="${lien}" style="background:${c.lienBouton ? '#96111C' : '#1B2A41'};color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 22px;border-radius:8px;display:inline-block">${echapper(c.bouton)}</a></p>
 </td></tr>
 <tr><td style="padding:14px 24px;background:#F5F6F8;color:#8A93A3;font-size:12px">CRF Perfection — Centre de recherche et de formation · Message automatique de l'Agenda CRF Perfection</td></tr>
 </table></td></tr></table></body></html>`
-  const texte = `Bonjour ${prenom(n.destinataire_nom)},\n\n${c.intro.replace(/<[^>]+>/g, '')}\n\n${n.numero ? `N° ${n.numero} — ${n.intitule}\n` : ''}${(c.lignes as string[][]).map(([l, v]) => `${l} : ${v}`).join('\n')}${c.citation ? `\n« ${c.citation} »` : ''}\n\n${c.bouton} : ${lien}\n\nCRF Perfection — Centre de recherche et de formation`
+  const texte = `Bonjour ${prenom(n.destinataire_nom)},\n\n${c.intro.replace(/<[^>]+>/g, '')}\n\n${n.numero ? `N° ${n.numero} — ${n.intitule}\n` : titreBloc ? `${titreBloc}\n` : ''}${(c.lignes as string[][]).map(([l, v]) => `${l} : ${v}`).join('\n')}${c.citation ? `\n« ${c.citation} »` : ''}\n\n${c.bouton} : ${lien}\n\nCRF Perfection — Centre de recherche et de formation`
   return { sujet: String(c.sujet).slice(0, 180), html, texte }
 }
 

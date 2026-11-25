@@ -29,6 +29,15 @@ export function texteNotification(n, profilsParId) {
           ? `a accepté votre report au ${formaterDate(d.nouvelle_echeance)} pour la tâche`
           : `a refusé votre demande de report${d.reponse ? ` (« ${d.reponse} »)` : ''} pour la tâche`
       }
+    case 'reunion': {
+      const quand = d.debut ? new Date(d.debut).toLocaleString('fr-FR', { timeZone: 'Africa/Porto-Novo', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+      const verbe = d.etat === 'annule' ? 'a annulé' : d.etat === 'modifie' ? 'a modifié' : 'a planifié'
+      return { auteur, action: `${verbe} « ${d.titre} »${d.etat !== 'annule' && quand ? ` — ${quand}` : ''}` }
+    }
+    case 'rappel_reunion': {
+      const h = d.debut ? new Date(d.debut).toLocaleTimeString('fr-FR', { timeZone: 'Africa/Porto-Novo', hour: '2-digit', minute: '2-digit' }) : ''
+      return { auteur: '⏰ Dans 30 minutes :', action: `« ${d.titre} » à ${h}` }
+    }
     case 'accuse_reception':
       return { auteur, action: 'a bien reçu la tâche' }
     default:

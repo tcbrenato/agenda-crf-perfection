@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { DonneesProvider } from './context/DonneesContext'
 import { ChatProvider } from './context/ChatContext'
 import Messages from './pages/Messages'
+import Reunions from './pages/Reunions'
 import { ToastProvider } from './context/ToastContext'
 import { configurationOk } from './lib/supabase'
 import { estAdmin } from './lib/droits'
@@ -45,6 +46,7 @@ function Routeur() {
           <Route path="taches/:id" element={<FicheTache />} />
           <Route path="taches/:id/modifier" element={<FormulaireTache />} />
           <Route path="calendrier" element={<Calendrier />} />
+          <Route path="reunions" element={<Reunions />} />
           <Route path="messages" element={<Messages />} />
           <Route path="messages/:id" element={<Messages />} />
           <Route path="compte" element={<MonCompte />} />

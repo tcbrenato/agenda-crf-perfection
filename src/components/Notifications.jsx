@@ -21,6 +21,9 @@ export default function Notifications({ notifications, variante = 'icone' }) {
     if (n.taches) {
       recharger()
       naviguer(`/taches/${n.taches.id}`)
+    } else if (n.details?.evenement_id) {
+      if (n.type === 'rappel_reunion' && n.details.lien) window.open(n.details.lien, '_blank', 'noopener')
+      naviguer('/reunions')
     }
   }
 
@@ -56,7 +59,7 @@ export default function Notifications({ notifications, variante = 'icone' }) {
               <span className="notification__corps">
                 <span>
                   {auteur && <strong>{auteur}</strong>} {action}{' '}
-                  {n.taches ? <strong>N° {n.taches.numero} — {n.taches.intitule}</strong> : '(supprimée)'}
+                  {n.taches ? <strong>N° {n.taches.numero} — {n.taches.intitule}</strong> : n.details?.evenement_id ? '' : '(supprimée)'}
                 </span>
                 <span className="notification__date">
                   {formaterHorodatage(n.cree_le)}

@@ -7,6 +7,10 @@ import { ajouterJours, formaterDateLongue, formaterMois, jourSemaine } from '../
 import { estEchue, estTerminee, trierParEcheance } from '../lib/statuts'
 import { majuscule, pluriel } from '../lib/texte'
 import { estGestionnaire } from '../lib/droits'
+import { Link } from 'react-router-dom'
+import CarteReunion from '../components/CarteReunion'
+import { useOccurrences } from '../hooks/useOccurrences'
+import { jourIsoDe } from '../lib/reunions'
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
@@ -45,6 +49,14 @@ export default function Calendrier() {
   const casesAffichees = cases[35].slice(0, 7) !== mois.slice(0, 7) ? cases.slice(0, 35) : cases
 
   const tachesDuJour = (parJour[selection] || []).slice().sort(trierParEcheance)
+  const bornes = useMemo(() => [new Date(`${cases[0]}T00:00:00+01:00`), new Date(`${ajouterJours(cases[cases.length - 1], 1)}T00:00:00+01:00`)], [cases])
+  const { liste: occurrences } = useOccurrences(bornes[0], bornes[1])
+  const reunionsParJour = useMemo(() => {
+    const index = {}
+    for (const o of occurrences) (index[jourIsoDe(o.occurrence)] ||= []).push(o)
+    return index
+  }, [occurrences])
+  const reunionsDuJour = reunionsParJour[selection] || []
 
   const changerMois = (n) => {
     const nouveau = moisSuivant(mois, n)
@@ -95,7 +107,8 @@ export default function Calendrier() {
                 >
                   {Number(iso.slice(8))}
                   <span className="cal-points">
-                    {resume(liste).map((c, i) => <i key={i} className={c} />)}
+                    {reunionsParJour[iso]?.length > 0 && <i className="reunion" />}
+                    {resume(liste).slice(0, reunionsParJour[iso]?.length ? 2 : 3).map((c, i) => <i key={i} className={c} />)}
                   </span>
                 </button>
               )
@@ -105,6 +118,7 @@ export default function Calendrier() {
             <span><i style={{ background: 'var(--st-encours-texte)' }} /> À venir</span>
             <span><i style={{ background: 'var(--rouge)' }} /> Échue</span>
             <span><i style={{ background: '#3c9a66' }} /> Terminée</span>
+            <span><i style={{ background: '#6B3FA0' }} /> Réunion</span>
             <button type="button" className="btn btn--fantome" style={{ minHeight: 32, padding: '0 6px', marginLeft: 'auto', fontSize: '0.8125rem' }} onClick={() => { setMois(premierDuMois(jour)); setSelection(jour) }}>
               Aujourd'hui
             </button>
@@ -115,7 +129,13 @@ export default function Calendrier() {
           <h2 className="titre-section">
             {majuscule(formaterDateLongue(selection))} <span className="compte">({tachesDuJour.length})</span>
           </h2>
-          <ListeTaches taches={tachesDuJour} vide="Aucune échéance ce jour-là." />
+          {reunionsDuJour.length > 0 && (
+            <div className="pile" style={{ gap: 8, marginBottom: 12 }}>
+              {reunionsDuJour.map((o) => <CarteReunion key={`${o.id}-${o.occurrence}`} o={o} compacte />)}
+            </div>
+          )}
+          <ListeTaches taches={tachesDuJour} vide={reunionsDuJour.length ? 'Aucune échéance de tâche ce jour-là.' : 'Aucune échéance ce jour-là.'} />
+          <Link to="/reunions" className="btn btn--secondaire btn--bloc" style={{ marginTop: 14 }}>Toutes les réunions</Link>
         </section>
       </div>
     </>

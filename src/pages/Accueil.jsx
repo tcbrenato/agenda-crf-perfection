@@ -12,6 +12,9 @@ import { useEstOrdinateur } from '../hooks/useMediaQuery'
 import { majuscule, prenom } from '../lib/texte'
 import { chargerReportsEnAttente, messageErreur, receptionAConfirmer } from '../lib/api'
 import { useConfirmerReception } from '../hooks/useConfirmerReception'
+import { useOccurrences } from '../hooks/useOccurrences'
+import CarteReunion from '../components/CarteReunion'
+import { jourDe, jourIsoDe } from '../lib/reunions'
 import { formaterDate as fd } from '../lib/dates'
 
 const CLE_PORTEE = 'agenda-crf-portee-accueil'
@@ -33,6 +36,9 @@ export default function Accueil() {
   const { profilsParId } = useDonnees()
   const [reports, setReports] = useState([])
   const reception = useConfirmerReception()
+  const [fenetre] = useState(() => [new Date(Date.now() - 2 * 3600_000), new Date(Date.now() + 7 * 86400_000)])
+  const { liste: reunions } = useOccurrences(fenetre[0], fenetre[1])
+  const prochaines = reunions.filter((o) => new Date(o.occurrence_fin) > new Date()).slice(0, 3)
   const aConfirmer = taches.filter((t) => receptionAConfirmer(profil, t))
   useEffect(() => {
     if (gestionnaire) chargerReportsEnAttente().then(setReports).catch(() => setReports([]))
@@ -104,6 +110,25 @@ export default function Accueil() {
           <div className="compteur__libelle">Terminées</div>
         </Link>
       </section>
+
+      {prochaines.length > 0 && (
+        <section aria-labelledby="titre-reunions" style={{ marginTop: 20 }}>
+          <div className="ligne ligne--espace">
+            <h2 className="titre-section" id="titre-reunions" style={{ margin: 0 }}>Prochaines réunions</h2>
+            <Link to="/reunions" className="btn btn--fantome btn--petit">Tout voir</Link>
+          </div>
+          <div className="pile" style={{ gap: 8, marginTop: 8 }}>
+            {prochaines.map((o) => (
+              <div key={`${o.id}-${o.occurrence}`}>
+                <div className="texte-tres-petit texte-doux" style={{ fontWeight: 700, margin: '0 0 4px 2px' }}>
+                  {jourIsoDe(o.occurrence) === jour ? "Aujourd'hui" : majuscule(jourDe(o.occurrence))}
+                </div>
+                <CarteReunion o={o} compacte />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {aConfirmer.length > 0 && (
         <section className="bloc-recu" aria-labelledby="titre-recu">

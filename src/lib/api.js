@@ -176,6 +176,43 @@ export async function chargerHistorique(tacheId) {
   return verifier(await supabase.from('historique').select('*').eq('tache_id', tacheId).order('date', { ascending: false }))
 }
 
+// ------------------------------- Réunions -------------------------------
+export async function chargerEvenements() {
+  const { data, error } = await supabase.from('evenements').select('*, evenement_participants(profil_id)').eq('annule', false)
+  if (error) throw error
+  return data.map(({ evenement_participants, ...e }) => ({ ...e, participants: (evenement_participants || []).map((p) => p.profil_id) }))
+}
+
+/** Occurrences (réunions répétées comprises) entre deux dates, avec le détail de chaque événement. */
+export async function chargerOccurrences(de, a) {
+  const [occ, evenements] = await Promise.all([
+    supabase.rpc('occurrences_evenements', { p_de: de.toISOString(), p_a: a.toISOString() }),
+    chargerEvenements()
+  ])
+  if (occ.error) throw occ.error
+  const parId = Object.fromEntries(evenements.map((e) => [e.id, e]))
+  return occ.data.filter((o) => parId[o.evenement_id]).map((o) => ({ ...parId[o.evenement_id], occurrence: o.debut, occurrence_fin: o.fin }))
+}
+
+export async function enregistrerEvenement(evenement, participants = [], anciens = []) {
+  const { id, ...champs } = evenement
+  const e = verifier(
+    id
+      ? await supabase.from('evenements').update({ ...champs, modifie_le: new Date().toISOString() }).eq('id', id).select().single()
+      : await supabase.from('evenements').insert(champs).select().single()
+  )
+  const aRetirer = anciens.filter((x) => !participants.includes(x))
+  const aAjouter = participants.filter((x) => !anciens.includes(x))
+  if (aRetirer.length) verifier(await supabase.from('evenement_participants').delete().eq('evenement_id', e.id).in('profil_id', aRetirer))
+  if (aAjouter.length) verifier(await supabase.from('evenement_participants').insert(aAjouter.map((profil_id) => ({ evenement_id: e.id, profil_id }))))
+  return e
+}
+
+/** Annulation : les participants sont prévenus. */
+export async function annulerEvenement(id) {
+  verifier(await supabase.from('evenements').update({ annule: true }).eq('id', id))
+}
+
 // --------------------------------- Chat ---------------------------------
 export async function chargerConversations() {
   const { data, error } = await supabase.rpc('resume_conversations')

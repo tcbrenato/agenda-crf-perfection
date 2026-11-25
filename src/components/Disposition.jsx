@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import AjoutRapide from './AjoutRapide'
 import Notifications from './Notifications'
-import { IconeAccueil, IconeCalendrier, IconeCompte, IconeDossier, IconeGroupe, IconeMessage, IconePlus, IconeStats, IconeTaches } from './Icones'
+import { IconeAccueil, IconeCalendrier, IconeCompte, IconeDossier, IconeGroupe, IconeMessage, IconePlus, IconeStats, IconeTaches, IconeVideo } from './Icones'
 import Avatar from './Avatar'
 import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
@@ -37,8 +37,9 @@ export default function Disposition() {
       const n = nouvelles[0]
       const { auteur, action } = texteNotification(n, profilsParId)
       toast.info(
-        nouvelles.length > 1 ? `${nouvelles.length} nouvelles notifications` : `${auteur} ${action} N° ${n.taches?.numero ?? ''}`.trim(),
-        n.taches ? { action: { libelle: 'Voir', onClick: () => naviguer(`/taches/${n.taches.id}`) } } : undefined
+        nouvelles.length > 1 ? `${nouvelles.length} nouvelles notifications` : `${auteur} ${action}${n.taches ? ` N° ${n.taches.numero}` : ''}`.trim(),
+        n.taches ? { action: { libelle: 'Voir', onClick: () => naviguer(`/taches/${n.taches.id}`) } }
+          : n.details?.lien ? { action: { libelle: 'Rejoindre', onClick: () => window.open(n.details.lien, '_blank', 'noopener') } } : undefined
       )
     }
   })
@@ -49,7 +50,7 @@ export default function Disposition() {
   const pastilleMessages = messagesNonLus > 0 && (
     <span className="pastille-nombre pastille-nombre--bleu" aria-label={`${messagesNonLus} messages non lus`}>{messagesNonLus > 99 ? '99+' : messagesNonLus}</span>
   )
-  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin') || pathname.startsWith('/statistiques') || pathname.startsWith('/messages')
+  const masquerFab = /\/(nouvelle|modifier)$/.test(pathname) || pathname.startsWith('/compte') || pathname.startsWith('/admin') || pathname.startsWith('/statistiques') || pathname.startsWith('/messages') || pathname.startsWith('/reunions')
   const admin = estAdmin(profil)
 
   const pastilleEchues = nbEchues > 0 && (
@@ -77,6 +78,7 @@ export default function Disposition() {
               {vers === '/messages' && pastilleMessages}
             </NavLink>
           ))}
+          <NavLink to="/reunions" className="lien-lateral"><IconeVideo /> Réunions</NavLink>
           {estGestionnaire(profil) && (
             <>
               <NavLink to="/projets" className="lien-lateral"><IconeDossier /> Projets</NavLink>
